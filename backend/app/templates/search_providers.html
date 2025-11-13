@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Find Your Healthcare Providers</h2>
+  <p>Search for hospitals and clinics where you've received care. We'll find their medical records fax numbers.</p>
+  
+  <form method="post" action="" class="form provider-search-form">
+    <div class="search-section">
+      <h3>Search by Name</h3>
+      <label>
+        Hospital or Clinic Name
+        <input name="search_query" type="text" placeholder="e.g., Massachusetts General Hospital">
+      </label>
+    </div>
+    
+    <div class="divider">OR</div>
+    
+    <div class="search-section">
+      <h3>Search by Location</h3>
+      <div class="form-row">
+        <label class="form-col">
+          City
+          <input name="city" type="text" placeholder="e.g., Boston">
+        </label>
+        <label class="form-col">
+          State
+          <input name="state" type="text" placeholder="e.g., MA" maxlength="2">
+        </label>
+        <label class="form-col">
+          ZIP Code
+          <input name="zip_code" type="text" placeholder="e.g., 02101">
+        </label>
+      </div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Search Providers</button>
+  </form>
+  
+  <div class="help-section">
+    <h3>💡 Tips for Finding Providers</h3>
+    <ul>
+      <li>Search by hospital name for specific facilities</li>
+      <li>Search by city/state/ZIP to find all providers in an area</li>
+      <li>You can add fax numbers manually on the next page if you already know them</li>
+      <li>We search multiple databases including Medicare and NPPES</li>
+    </ul>
+  </div>
+  
+  <div class="manual-entry-note">
+    <p><strong>Know the fax number already?</strong></p>
+    <p><a href="/review-providers/{{ patient.id }}">Skip search and enter manually</a></p>
+  </div>
+</section>
+{% endblock %}

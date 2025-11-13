@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="confirmation">
+  <div class="confirmation-icon">📧</div>
+  <h2>Check Your Email</h2>
+  
+  <p>We've sent a login link to:</p>
+  <p class="email-highlight">{{ email }}</p>
+  
+  <p>Click the link in your email to access your portal. The link will expire in 15 minutes.</p>
+  
+  <div class="help-text">
+    <p><strong>Didn't receive it?</strong></p>
+    <ul>
+      <li>Check your spam folder</li>
+      <li>Make sure you entered the correct email</li>
+      <li>Wait a few minutes and check again</li>
+      <li><a href="/login">Try sending again</a></li>
+    </ul>
+  </div>
+  
+  {% if magic_link %}
+  <div class="dev-only">
+    <p><strong>Development Mode:</strong></p>
+    <p>Magic link: <a href="{{ magic_link }}">{{ magic_link }}</a></p>
+    <p class="small">(This will not be shown in production)</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

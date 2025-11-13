@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Review & Finalize Providers</h2>
+  <p>Review your selected providers and add any additional fax numbers you know.</p>
+  
+  <div id="providersContainer">
+    <!-- Selected providers will be loaded here -->
+  </div>
+  
+  <div class="add-manual-section">
+    <h3>Add Provider Manually</h3>
+    <div class="form manual-add-form">
+      <div class="form-row">
+        <label class="form-col">
+          Provider Name *
+          <input type="text" id="manualName" placeholder="e.g., St. Mary's Hospital">
+        </label>
+        <label class="form-col">
+          Fax Number *
+          <input type="tel" id="manualFax" placeholder="e.g., +1-555-123-4567">
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="form-col">
+          Address (optional)
+          <input type="text" id="manualAddress" placeholder="e.g., 123 Main St, Boston, MA">
+        </label>
+        <label class="form-col">
+          Phone (optional)
+          <input type="tel" id="manualPhone" placeholder="e.g., +1-555-123-4567">
+        </label>
+      </div>
+      <button type="button" onclick="addManualProvider()" class="btn btn-secondary">
+        + Add Provider
+      </button>
+    </div>
+  </div>
+  
+  <div class="review-summary" id="summary">
+    <h3>Summary</h3>
+    <p>You will send medical record requests to <strong><span id="providerCount">0</span> provider(s)</strong>.</p>
+  </div>
+  
+  <form method="post" action="" id="finalForm">
+    <input type="hidden" name="selected_providers" id="selectedProvidersInput">
+    
+    <div class="form-actions">
+      <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary">Back to Search</a>
+      <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+        Send Requests
+      </button>
+    </div>
+  </form>
+  
+  <div class="important-note">
+    <h4>⚠️ Important</h4>
+    <p>By clicking "Send Requests", you authorize us to send fax requests to all selected providers on your behalf using your signed HIPAA authorization.</p>
+  </div>
+</section>
+
+<script>
+let providers = [];
+
+// Load providers from sessionStorage or start with empty array
+window.onload = function() {
+  const stored = sessionStorage.getItem('selectedProviders');
+  if (stored) {
+    providers = JSON.parse(stored);
+    renderProviders();
+  }
+  updateSummary();
+};
+
+function renderProviders() {
+  const container = document.getElementById('providersContainer');
+  
+  if (providers.length === 0) {
+    container.innerHTML = '<p class="no-providers">No providers selected yet. Add providers manually or <a href="/search-providers/{{ patient.id }}">search for providers</a>.</p>';
+    return;
+  }
+  
+  container.innerHTML = '<h3>Selected Providers</h3>';
+  
+  providers.forEach((provider, index) => {
+    const card = document.createElement('div');
+    card.className = 'provider-card';
+    card.innerHTML = `
+      <div class="provider-info">
+        <h4>${provider.name}</h4>
+        ${provider.address ? `<p><strong>Address:</strong> ${provider.address}</p>` : ''}
+        ${provider.phone ? `<p><strong>Phone:</strong> ${provider.phone}</p>` : ''}
+        <p class="fax-display"><strong>Fax:</strong> 
+          <input type="text" value="${provider.fax || ''}" 
+                 onchange="updateProviderFax(${index}, this.value)"
+                 placeholder="Enter fax number"
+                 class="inline-input ${provider.fax ? '' : 'missing'}">
+        </p>
+        ${provider.source ? `<span class="source-badge">${provider.source}</span>` : ''}
+      </div>
+      <button type="button" onclick="removeProvider(${index})" class="btn-remove" title="Remove">
+        ✕
+      </button>
+    `;
+    container.appendChild(card);
+  });
+  
+  updateSummary();
+}
+
+function addManualProvider() {
+  const name = document.getElementById('manualName').value.trim();
+  const fax = document.getElementById('manualFax').value.trim();
+  const address = document.getElementById('manualAddress').value.trim();
+  const phone = document.getElementById('manualPhone').value.trim();
+  
+  if (!name) {
+    alert('Please enter a provider name');
+    return;
+  }
+  
+  if (!fax) {
+    alert('Please enter a fax number');
+    return;
+  }
+  
+  // Basic fax validation
+  const faxDigits = fax.replace(/\D/g, '');
+  if (faxDigits.length < 10) {
+    alert('Please enter a valid fax number (at least 10 digits)');
+    return;
+  }
+  
+  providers.push({
+    name: name,
+    fax: fax,
+    address: address,
+    phone: phone,
+    source: 'manual',
+    type: 'hospital'
+  });
+  
+  // Clear form
+  document.getElementById('manualName').value = '';
+  document.getElementById('manualFax').value = '';
+  document.getElementById('manualAddress').value = '';
+  document.getElementById('manualPhone').value = '';
+  
+  renderProviders();
+}
+
+function removeProvider(index) {
+  providers.splice(index, 1);
+  renderProviders();
+}
+
+function updateProviderFax(index, newFax) {
+  providers[index].fax = newFax;
+  updateSummary();
+}
+
+function updateSummary() {
+  const validProviders = providers.filter(p => p.fax && p.fax.trim());
+  document.getElementById('providerCount').textContent = validProviders.length;
+  
+  const submitBtn = document.getElementById('submitBtn');
+  if (validProviders.length > 0) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = `Send Requests to ${validProviders.length} Provider(s)`;
+  } else {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'No Providers with Fax Numbers';
+  }
+}
+
+// On form submit, set the hidden input
+document.getElementById('finalForm').onsubmit = function(e) {
+  const validProviders = providers.filter(p => p.fax && p.fax.trim());
+  
+  if (validProviders.length === 0) {
+    e.preventDefault();
+    alert('Please add at least one provider with a fax number');
+    return false;
+  }
+  
+  document.getElementById('selectedProvidersInput').value = JSON.stringify(validProviders);
+  return true;
+};
+</script>
+
+<style>
+.provider-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  background: white;
+}
+
+.provider-info {
+  flex: 1;
+}
+
+.provider-info h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.provider-info p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.btn-remove {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-remove:hover {
+  background: #c82333;
+}
+
+.inline-input {
+  border: 1px solid #ddd;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.inline-input.missing {
+  border-color: #ffc107;
+  background: #fff3cd;
+}
+
+.add-manual-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.add-manual-section h3 {
+  margin-top: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-col {
+  flex: 1;
+}
+
+.review-summary {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #e7f3ff;
+  border-left: 4px solid #007bff;
+  border-radius: 4px;
+}
+
+.important-note {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+}
+
+.important-note h4 {
+  margin-top: 0;
+}
+
+.no-providers {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.fax-display {
+  font-family: monospace;
+  color: #28a745;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Search Results</h2>
+
+  {% if search_query %}
+    <p>Results for: <strong>{{ search_query }}</strong></p>
+  {% endif %}
+  {% if city or state or zip_code %}
+    <p>Location: <strong>
+      {% if city %}{{ city }}{% endif %}
+      {% if city and state %}, {% endif %}
+      {% if state %}{{ state }}{% endif %}
+      {% if zip_code %} {{ zip_code }}{% endif %}
+    </strong></p>
+  {% endif %}
+
+  {% if hospitals %}
+    <p class="results-count">Found {{ hospitals|length }} provider(s)</p>
+
+    <div class="search-info">
+      <p><strong>💡 About fax numbers:</strong> We automatically search for verified medical records department fax numbers.
+      Providers with verified fax numbers are marked with a ✅.</p>
+    </div>
+
+    <form id="selectForm" action="/review-providers/{{ patient.id }}" method="get">
+      <div class="results-list">
+        {% for hospital in hospitals %}
+        <div class="result-card {% if hospital.fax_verified %}verified{% endif %}">
+          <input type="checkbox" id="hospital_{{ loop.index }}"
+                 data-provider="{{ hospital|tojson|e }}"
+                 class="provider-checkbox">
+          <label for="hospital_{{ loop.index }}" class="result-label">
+            <div class="result-header">
+              <h3>{{ hospital.name }}</h3>
+              <div class="badges">
+                {% if hospital.fax_verified %}
+                  <span class="verified-badge" title="Fax number verified from medical records department">
+                    ✅ Verified
+                  </span>
+                {% endif %}
+                <span class="source-badge">{{ hospital.source }}</span>
+              </div>
+            </div>
+
+            <div class="result-details">
+              {% if hospital.address %}
+                <p><strong>📍 Address:</strong> {{ hospital.address }}</p>
+              {% endif %}
+
+              {% if hospital.phone %}
+                <p><strong>☎️ Phone:</strong> {{ hospital.phone }}</p>
+              {% endif %}
+
+              {% if hospital.medical_records_fax or hospital.fax %}
+                <div class="fax-info">
+                  <p class="fax-number">
+                    <strong>📠 Medical Records Fax:</strong>
+                    {{ hospital.medical_records_fax or hospital.fax }}
+
+                    {% if hospital.fax_verified %}
+                      <span class="confidence-high" title="High confidence - verified from official source">
+                        ({{ (hospital.fax_confidence * 100)|int }}% confidence)
+                      </span>
+                    {% elif hospital.fax_confidence and hospital.fax_confidence >= 0.7 %}
+                      <span class="confidence-medium" title="Medium confidence - found online">
+                        ({{ (hospital.fax_confidence * 100)|int }}% confidence)
+                      </span>
+                    {% elif hospital.fax %}
+                      <span class="confidence-low" title="Unverified - from directory listing">
+                        (Unverified)
+                      </span>
+                    {% endif %}
+                  </p>
+
+                  {% if hospital.fax_verification_source %}
+                    <p class="fax-source">
+                      <em>Source: {{ hospital.fax_verification_source }}</em>
+                      {% if hospital.verification_url %}
+                        <a href="{{ hospital.verification_url }}" target="_blank" class="verify-link">
+                          🔗 Verify
+                        </a>
+                      {% endif %}
+                    </p>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="no-fax-warning">
+                  <p class="no-fax">⚠️ No fax number available</p>
+                  <p class="help-text small">
+                    We'll try to find it automatically, or you can:
+                    <br>• Call the hospital and ask for the medical records department fax
+                    <br>• Add it manually on the next page
+                  </p>
+                </div>
+              {% endif %}
+
+              {% if hospital.note %}
+                <p class="note"><em>ℹ️ {{ hospital.note }}</em></p>
+              {% endif %}
+            </div>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="form-actions">
+        <button type="button" onclick="selectAll()" class="btn btn-secondary">Select All</button>
+        <button type="button" onclick="selectVerified()" class="btn btn-secondary">Select Verified Only</button>
+        <button type="button" onclick="deselectAll()" class="btn btn-secondary">Deselect All</button>
+        <button type="button" onclick="continueToReview()" class="btn btn-primary">Continue to Review</button>
+      </div>
+    </form>
+  {% else %}
+    <div class="no-results">
+      <h3>No providers found</h3>
+      <p>We couldn't find any providers matching your search criteria.</p>
+
+      <div class="help-section">
+        <h4>💡 Search Tips:</h4>
+        <ul>
+          <li><strong>Check spelling:</strong> Try common variations (e.g., "Mass General" vs "Massachusetts General")</li>
+          <li><strong>Broaden your search:</strong> Try searching by city/state only</li>
+          <li><strong>Use partial names:</strong> Just enter "Presbyterian" instead of full name</li>
+          <li><strong>Known the fax?</strong> <a href="/review-providers/{{ patient.id }}">Add provider manually</a></li>
+        </ul>
+      </div>
+
+      <div class="search-examples">
+        <h4>Example searches:</h4>
+        <ul>
+          <li>"Mayo Clinic" (by name)</li>
+          <li>City: "Boston", State: "MA" (all Boston hospitals)</li>
+          <li>ZIP: "02115" (hospitals in that ZIP)</li>
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="form-actions">
+    <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary">🔍 New Search</a>
+    <a href="/review-providers/{{ patient.id }}" class="btn btn-secondary">➕ Add Manually</a>
+  </div>
+</section>
+
+<script>
+let selectedProviders = [];
+
+function selectAll() {
+  document.querySelectorAll('.provider-checkbox').forEach(cb => cb.checked = true);
+}
+
+function selectVerified() {
+  document.querySelectorAll('.provider-checkbox').forEach(cb => {
+    const card = cb.closest('.result-card');
+    cb.checked = card && card.classList.contains('verified');
+  });
+}
+
+function deselectAll() {
+  document.querySelectorAll('.provider-checkbox').forEach(cb => cb.checked = false);
+}
+
+function continueToReview() {
+  selectedProviders = [];
+  document.querySelectorAll('.provider-checkbox:checked').forEach(cb => {
+    const providerData = JSON.parse(cb.getAttribute('data-provider'));
+    selectedProviders.push(providerData);
+  });
+
+  if (selectedProviders.length === 0) {
+    alert('Please select at least one provider');
+    return;
+  }
+
+  // Store in sessionStorage and redirect
+  sessionStorage.setItem('selectedProviders', JSON.stringify(selectedProviders));
+  window.location.href = '/review-providers/{{ patient.id }}';
+}
+</script>
+
+<style>
+.search-info {
+  background: #e7f3ff;
+  border-left: 4px solid #007bff;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+}
+
+.result-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  gap: 1rem;
+  background: white;
+  transition: all 0.2s;
+}
+
+.result-card.verified {
+  border-color: #28a745;
+  background: #f8fff9;
+}
+
+.result-card:has(.provider-checkbox:checked) {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+}
+
+.result-label {
+  flex: 1;
+  cursor: pointer;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 0.5rem;
+}
+
+.result-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  flex: 1;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.source-badge {
+  background: #6c757d;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.verified-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.result-details p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.fax-info {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}
+
+.fax-number {
+  color: #28a745;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.fax-source {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.verify-link {
+  color: #007bff;
+  text-decoration: none;
+  margin-left: 0.5rem;
+}
+
+.verify-link:hover {
+  text-decoration: underline;
+}
+
+.confidence-high {
+  color: #28a745;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.confidence-medium {
+  color: #ffc107;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.confidence-low {
+  color: #6c757d;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.no-fax-warning {
+  background: #fff3cd;
+  border-left: 3px solid #ffc107;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}
+
+.no-fax {
+  color: #856404;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.help-text {
+  color: #666;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.note {
+  color: #6c757d;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.form-actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.no-results h3 {
+  margin-top: 0;
+  color: #6c757d;
+}
+
+.help-section, .search-examples {
+  text-align: left;
+  max-width: 600px;
+  margin: 2rem auto;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.help-section h4, .search-examples h4 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.help-section ul, .search-examples ul {
+  text-align: left;
+  padding-left: 1.5rem;
+}
+
+.help-section li, .search-examples li {
+  margin: 0.5rem 0;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-container">
+  <h2>Log In to Your Account</h2>
+  
+  {% if error %}
+    <div class="alert alert-error">
+      {% if error == 'email_exists' %}
+        An account with this email already exists. Please log in instead.
+      {% else %}
+        {{ error }}
+      {% endif %}
+    </div>
+  {% endif %}
+  
+  <p>We'll send you a secure link to access your portal.</p>
+  
+  <form method="post" action="/login" class="form auth-form">
+    <label>
+      Email Address
+      <input name="email" type="email" required placeholder="your.email@example.com">
+    </label>
+    
+    <button type="submit" class="btn btn-primary">Send Login Link</button>
+  </form>
+  
+  <p class="auth-switch">
+    Don't have an account? <a href="/register">Sign up here</a>
+  </p>
+</section>
+
+<section class="auth-info">
+  <h3>Passwordless Login</h3>
+  <p>For your security, we use magic links instead of passwords. Simply enter your email, and we'll send you a secure link to access your portal.</p>
+  
+  <div class="security-features">
+    <div class="security-item">
+      <strong>🔒 No Passwords</strong>
+      <p>No passwords to remember or get hacked</p>
+    </div>
+    <div class="security-item">
+      <strong>⏱️ Time-Limited</strong>
+      <p>Links expire after 15 minutes</p>
+    </div>
+    <div class="security-item">
+      <strong>🔐 One-Time Use</strong>
+      <p>Each link can only be used once</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
