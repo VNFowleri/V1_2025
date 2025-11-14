@@ -12,7 +12,7 @@ Improvements:
 6. Rate limiting protection
 7. Batch fax retrieval support
 
-Version: 2.0
+Version: 2.0.1
 """
 
 import asyncio
