@@ -1,5 +1,6 @@
-# app/routers/web.py - v3.0 - ENHANCED SEARCH WITH FUZZY MATCHING & PAGINATION
-# Enhanced with improved hospital search, fuzzy matching, pagination, and professional consent forms
+# app/routers/web.py - v3.1 - INTEGRATED WITH HUMBLEFAX
+# Enhanced with improved hospital search, fuzzy matching, pagination, professional consent forms,
+# and HumbleFax integration for reliable fax services
 import os
 import json
 import base64
@@ -19,7 +20,6 @@ from app.models.consent import PatientConsent
 from app.models.record_request import RecordRequest, ProviderRequest
 from app.models.provider import Provider
 from app.services.pdf_ops import generate_release_pdf, write_cover_sheet
-
 # UPDATED: Import enhanced hospital search with fuzzy matching and pagination (v3.0)
 from app.services.hospital_directory import (
     search_hospitals,
@@ -29,12 +29,12 @@ from app.services.hospital_directory import (
     validate_fax_number,
     format_fax_number
 )
-
 from app.services.auth_service import (
     generate_magic_link,
     verify_magic_link,
     send_magic_link_email
 )
+# UPDATED v3.1: Import HumbleFax service instead of iFax
 from app.services.humblefax_service import send_fax
 
 router = APIRouter()
@@ -51,7 +51,6 @@ has already been taken. This authorization will expire 180 days from the date of
 # -------------------------
 # Helper Functions
 # -------------------------
-
 def get_patient_from_session(patient_uuid: str, db: AsyncSession):
     """Get patient from session UUID."""
     return patient_uuid
@@ -66,7 +65,6 @@ def _generate_search_key(query: str = "", zip_code: str = "") -> str:
 # -------------------------
 # Home / Landing
 # -------------------------
-
 @router.get("/", response_class=HTMLResponse)
 async def index(
         request: Request,
@@ -89,14 +87,12 @@ async def index(
                 return RedirectResponse(url=f"/status/{active_request.id}", status_code=303)
             else:
                 return RedirectResponse(url=f"/portal/{patient.uuid}", status_code=303)
-
     return templates.TemplateResponse("index.html", {"request": request})
 
 
 # -------------------------
 # Authentication
 # -------------------------
-
 @router.get("/login", response_class=HTMLResponse)
 async def login_form(request: Request) -> HTMLResponse:
     """Login page."""
@@ -112,7 +108,6 @@ async def login_submit(
     """Simple login - skip email verification for development."""
     result = await db.execute(select(Patient).where(Patient.email == email))
     patient = result.scalars().first()
-
     if not patient:
         return templates.TemplateResponse(
             "login.html",
@@ -121,7 +116,6 @@ async def login_submit(
                 "error": "No account found with this email. Please sign up first."
             }
         )
-
     response = RedirectResponse(url=f"/portal/{patient.uuid}", status_code=303)
     response.set_cookie(key="patient_uuid", value=str(patient.uuid), httponly=True, max_age=86400 * 30)
     return response
@@ -137,13 +131,10 @@ async def verify_login(
     email = verify_magic_link(token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid or expired login link")
-
     result = await db.execute(select(Patient).where(Patient.email == email))
     patient = result.scalars().first()
-
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-
     response = RedirectResponse(url=f"/portal/{patient.uuid}", status_code=303)
     response.set_cookie(key="patient_uuid", value=str(patient.uuid), httponly=True, max_age=86400 * 30)
     return response
@@ -152,7 +143,6 @@ async def verify_login(
 # -------------------------
 # Registration
 # -------------------------
-
 @router.get("/register", response_class=HTMLResponse)
 async def register_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse("register.html", {"request": request})
@@ -180,14 +170,12 @@ async def register_submit(
                     "error": "An account with this email already exists. Please login instead."
                 }
             )
-
     date_of_birth = None
     if dob:
         try:
             date_of_birth = datetime.strptime(dob, "%Y-%m-%d").date()
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
-
     patient = Patient(
         first_name=first_name or "",
         last_name=last_name or "",
@@ -198,7 +186,6 @@ async def register_submit(
     db.add(patient)
     await db.commit()
     await db.refresh(patient)
-
     response = RedirectResponse(url=f"/consent/{patient.id}", status_code=303)
     response.set_cookie(key="patient_uuid", value=str(patient.uuid), httponly=True, max_age=86400 * 30)
     return response
@@ -207,7 +194,6 @@ async def register_submit(
 # -------------------------
 # Consent - ENHANCED v2.0
 # -------------------------
-
 @router.get("/consent/{patient_id}", response_class=HTMLResponse)
 async def consent_form(
         patient_id: int,
@@ -219,7 +205,6 @@ async def consent_form(
     patient = res.scalars().first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-
     return templates.TemplateResponse(
         "consent.html",
         {
@@ -312,7 +297,6 @@ async def consent_submit(
 # -------------------------
 # Search Providers - ENHANCED v3.0 with Fuzzy Matching & Pagination
 # -------------------------
-
 @router.get("/search-providers/{patient_id}", response_class=HTMLResponse)
 async def search_providers_page(
         patient_id: int,
@@ -321,7 +305,6 @@ async def search_providers_page(
 ) -> HTMLResponse:
     """
     Display the enhanced provider search form.
-
     v3.0 Features:
     - Search by hospital name (with fuzzy matching)
     - Search by ZIP code
@@ -330,7 +313,6 @@ async def search_providers_page(
     # Verify patient exists
     result = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = result.scalars().first()
-
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
@@ -356,13 +338,11 @@ async def search_providers_submit(
     - Fuzzy matching for name searches (casts a broad net)
     - ZIP code filtering
     - Up to 200 results with pagination
-
     This endpoint performs the search and redirects to results page 1.
     """
     # Verify patient exists
     result = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = result.scalars().first()
-
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
@@ -383,7 +363,6 @@ async def search_providers_submit(
 
     # Perform the search with fuzzy matching
     log.info(f"🔍 Searching hospitals - Query: '{search_query}', ZIP: '{zip_code}'")
-
     try:
         hospitals = search_hospitals(
             query=search_query if search_query else None,
@@ -392,7 +371,6 @@ async def search_providers_submit(
             use_fuzzy=True,  # Enable fuzzy matching
             fuzzy_threshold=40  # Broad matching threshold
         )
-
         log.info(f"✅ Found {len(hospitals)} hospitals")
 
         # Cache the results for pagination
@@ -405,7 +383,6 @@ async def search_providers_submit(
                 f"&query={search_query}&zip={zip_code}",
             status_code=303
         )
-
     except Exception as e:
         log.exception(f"❌ Error during hospital search: {e}")
         return templates.TemplateResponse(
@@ -430,9 +407,7 @@ async def search_results_page(
 ) -> HTMLResponse:
     """
     Display paginated search results.
-
     NEW in v3.0: Pagination support for up to 200 results.
-
     Args:
         patient_id: Patient ID
         page: Current page number (1-indexed)
@@ -443,13 +418,11 @@ async def search_results_page(
     # Verify patient exists
     result = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = result.scalars().first()
-
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
     # Retrieve cached search results
     hospitals = get_cached_search_results(search_key)
-
     if hospitals is None:
         # Cache expired or invalid key, redirect back to search
         log.warning(f"Search cache miss for key: {search_key}")
@@ -493,7 +466,6 @@ async def search_results_page(
 # -------------------------
 # Review Providers
 # -------------------------
-
 @router.get("/review-providers/{patient_id}", response_class=HTMLResponse)
 async def review_providers_page(
         patient_id: int,
@@ -503,7 +475,6 @@ async def review_providers_page(
     """Page to review and edit selected providers before sending faxes."""
     res = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = res.scalars().first()
-
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
@@ -522,8 +493,8 @@ async def review_providers_submit(
 ) -> RedirectResponse:
     """
     Process selected providers and create requests.
-    ENHANCED v2.0: Now generates professional fax cover sheets with all required
-    information for HIPAA-compliant medical records requests.
+    ENHANCED v3.1: Now uses HumbleFax service for reliable fax delivery
+    with professional cover sheets and HIPAA-compliant documents.
     """
     p = await db.get(Patient, patient_id)
     if not p:
@@ -591,9 +562,10 @@ async def review_providers_submit(
     await db.commit()
     await db.refresh(rr)
 
-    # Prepare for fax sending
+    # Prepare for fax sending with HumbleFax
     base_url = os.getenv("BASE_EXTERNAL_URL", "")
-    callback = f"{base_url}/ifax/outbound-status" if base_url else None
+    # UPDATED v3.1: Change callback URL to HumbleFax endpoint
+    callback = f"{base_url}/humblefax/outbound-status" if base_url else None
 
     covers_dir = "storage/covers"
     os.makedirs(covers_dir, exist_ok=True)
@@ -603,7 +575,7 @@ async def review_providers_submit(
 
     # Send fax to each provider with professional cover sheets
     for prov in providers:
-        # ENHANCED: Generate professional cover sheet with all details
+        # Generate professional cover sheet with all details
         cover_path = os.path.join(covers_dir, f"cover_rr{rr.id}_prov{prov.id}.pdf")
 
         # Calculate total pages (cover + release form)
@@ -624,16 +596,16 @@ async def review_providers_submit(
         )
 
         try:
-            # Send fax with both cover sheet and release form
+            # UPDATED v3.1: Send fax via HumbleFax service
+            # HumbleFax service handles the API call and returns structured response
             res = send_fax(
                 to_number=prov.fax,
                 file_paths=[cover_path, consent.consent_pdf_path],
-                cover_text=f"Medical Records Request for {patient_name}",
                 callback_url=callback
             )
 
             if res.get("success"):
-                job_id = res.get("tmpFaxId", "")
+                job_id = res.get("fax_id", "")  # HumbleFax returns 'fax_id'
                 log.info(
                     f"✅ Fax sent successfully to {prov.name} "
                     f"(Fax: {prov.fax}, Job ID: {job_id})"
@@ -644,6 +616,7 @@ async def review_providers_submit(
                     fax_number_used=prov.fax,
                     status="fax_sent",
                     outbound_job_id=job_id,
+                    outbound_transaction_id=job_id,  # HumbleFax uses same ID
                     sent_at=datetime.utcnow()
                 )
             else:
@@ -659,7 +632,6 @@ async def review_providers_submit(
                     status="fax_failed",
                     failed_reason=error_msg
                 )
-
         except Exception as e:
             log.exception(
                 f"❌ Exception sending fax to {prov.name} "
@@ -672,23 +644,20 @@ async def review_providers_submit(
                 status="fax_failed",
                 failed_reason=str(e)
             )
-
         db.add(pr)
 
     await db.commit()
 
     log.info(
         f"✅ Record request {rr.id} created with {len(providers)} providers. "
-        f"Faxes sent with professional cover sheets and release forms."
+        f"Faxes sent via HumbleFax with professional cover sheets and release forms."
     )
-
     return RedirectResponse(url=f"/status/{rr.id}", status_code=303)
 
 
 # -------------------------
 # Status page
 # -------------------------
-
 @router.get("/status/{request_id}", response_class=HTMLResponse)
 async def status_page(
         request_id: int,
@@ -729,7 +698,6 @@ async def status_page(
 # -------------------------
 # Cancel Request
 # -------------------------
-
 @router.post("/cancel-request/{request_id}")
 async def cancel_request(
         request_id: int,

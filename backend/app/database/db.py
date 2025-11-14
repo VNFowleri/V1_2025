@@ -1,4 +1,9 @@
 # backend/app/database/db.py
+
+# CRITICAL FIX: Load .env file FIRST before reading environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 import sys
 import ssl
