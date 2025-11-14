@@ -39,4 +39,4 @@ echo "▶︎ ${UVICORN_CMD}"
 ${UVICORN_CMD} 2>&1 | tee "${LOG_FILE}"
 
 
-# Making a hashed edit so that git will update the file as having a new edit.
+# trying again...
