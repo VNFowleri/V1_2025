@@ -1,0 +1,21 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m9809[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m9812[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:52487 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52488 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52491 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52495 - "[1mPOST /register HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52495 - "[1mGET /login?error=email_exists HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.auth_service:Magic link for btgaston1@gmail.com: https://veritasone.net/auth/verify?token=aV8bZ0_uSGrgFlQNtewq-iPuszm_r9xx_juBX52X9r0
+
+============================================================
+MAGIC LINK FOR: btgaston1@gmail.com
+Link: https://veritasone.net/auth/verify?token=aV8bZ0_uSGrgFlQNtewq-iPuszm_r9xx_juBX52X9r0
+============================================================
+
+[32mINFO[0m:     127.0.0.1:52498 - "[1mPOST /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52512 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52512 - "[1mGET /login HTTP/1.1[0m" [32m200 OK[0m

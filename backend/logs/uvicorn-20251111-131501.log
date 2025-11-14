@@ -1,0 +1,85 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m1918[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m1921[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     52.26.228.122:0 - "[1mPOST / HTTP/1.1[0m" [31m405 Method Not Allowed[0m
+[32mINFO[0m:     52.26.228.122:0 - "[1mPOST / HTTP/1.1[0m" [31m405 Method Not Allowed[0m
+INFO:app.routers.ifax:================================================================================
+INFO:app.routers.ifax:📨 Incoming fax webhook received
+INFO:app.routers.ifax:Headers: {'host': '6f1d95cee604.ngrok.app', 'user-agent': 'curl/7.61.1', 'content-length': '297', 'accept': 'application/json', 'content-type': 'application/json', 'x-forwarded-for': '52.26.228.122', 'x-forwarded-host': '6f1d95cee604.ngrok.app', 'x-forwarded-proto': 'https', 'accept-encoding': 'gzip'}
+INFO:app.routers.ifax:Raw payload: {'jobId': 12345, 'faxCallLength': 59, 'faxCallStart': 1699574434, 'faxCallEnd': 1699574493, 'faxTotalPages': 1, 'success': True, 'fromNumber': '+19073131400', 'toNumber': '+19073131400', 'code': 0, 'message': 'NORMAL_CLEARING', 'faxReceivedPages': 1, 'faxStatus': 'received', 'direction': 'inbound', 'transactionId': 123123}
+INFO:app.routers.ifax:✅ Valid payload: JobID=12345, TransactionID=123123, From=+19073131400, Pages=1
+INFO:app.routers.ifax:✅ Created FaxFile record: ID=24, JobID=12345
+INFO:app.routers.ifax:✅ Queued background processing for FaxID=24, JobID=12345
+INFO:app.routers.ifax:================================================================================
+[32mINFO[0m:     52.26.228.122:0 - "[1mPOST /ifax/receive HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.ifax:🚀 Starting background processing for FaxID=24
+INFO:app.services.fax_processor.IncomingFaxProcessor:🔄 Starting fax processing: JobID=12345, FaxID=24
+INFO:app.services.fax_processor.IncomingFaxProcessor:📥 Step 1/6: Downloading fax PDF...
+INFO:app.services.ifax_service:Downloading fax: jobId=12345, transactionId=123123
+ERROR:app.services.ifax_service:Fax download failed: {'status': 0, 'code': 120033, 'message': 'The fax does not exist'}
+INFO:app.routers.ifax:✅ Background processing complete for FaxID=24: {'success': False, 'fax_id': 24, 'patient_matched': False, 'patient_id': None, 'provider_matched': False, 'provider_request_ids': [], 'request_completed': False, 'completed_request_ids': [], 'errors': ['Download failed: Downloaded file not found or invalid path']}
+ERROR:app.routers.ifax:⚠️ Processing had errors: ['Download failed: Downloaded file not found or invalid path']
+INFO:app.routers.ifax:================================================================================
+INFO:app.routers.ifax:📨 Incoming fax webhook received
+INFO:app.routers.ifax:Headers: {'host': '6f1d95cee604.ngrok.app', 'user-agent': 'curl/7.61.1', 'content-length': '297', 'accept': 'application/json', 'content-type': 'application/json', 'x-forwarded-for': '52.26.228.122', 'x-forwarded-host': '6f1d95cee604.ngrok.app', 'x-forwarded-proto': 'https', 'accept-encoding': 'gzip'}
+INFO:app.routers.ifax:Raw payload: {'jobId': 12345, 'faxCallLength': 59, 'faxCallStart': 1699574434, 'faxCallEnd': 1699574493, 'faxTotalPages': 1, 'success': True, 'fromNumber': '+19073131400', 'toNumber': '+19073131400', 'code': 0, 'message': 'NORMAL_CLEARING', 'faxReceivedPages': 1, 'faxStatus': 'received', 'direction': 'inbound', 'transactionId': 123123}
+INFO:app.routers.ifax:✅ Valid payload: JobID=12345, TransactionID=123123, From=+19073131400, Pages=1
+INFO:app.routers.ifax:✅ Created FaxFile record: ID=25, JobID=12345
+INFO:app.routers.ifax:✅ Queued background processing for FaxID=25, JobID=12345
+INFO:app.routers.ifax:================================================================================
+[32mINFO[0m:     52.26.228.122:0 - "[1mPOST /ifax/receive HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.ifax:🚀 Starting background processing for FaxID=25
+INFO:app.services.fax_processor.IncomingFaxProcessor:🔄 Starting fax processing: JobID=12345, FaxID=25
+INFO:app.services.fax_processor.IncomingFaxProcessor:📥 Step 1/6: Downloading fax PDF...
+INFO:app.services.ifax_service:Downloading fax: jobId=12345, transactionId=123123
+ERROR:app.services.ifax_service:Fax download failed: {'status': 0, 'code': 120033, 'message': 'The fax does not exist'}
+INFO:app.routers.ifax:✅ Background processing complete for FaxID=25: {'success': False, 'fax_id': 25, 'patient_matched': False, 'patient_id': None, 'provider_matched': False, 'provider_request_ids': [], 'request_completed': False, 'completed_request_ids': [], 'errors': ['Download failed: Downloaded file not found or invalid path']}
+ERROR:app.routers.ifax:⚠️ Processing had errors: ['Download failed: Downloaded file not found or invalid path']
+[32mINFO[0m:     52.26.228.122:0 - "[1mPOST / HTTP/1.1[0m" [31m405 Method Not Allowed[0m
+[32mINFO[0m:     52.26.228.122:0 - "[1mPOST / HTTP/1.1[0m" [31m405 Method Not Allowed[0m
+INFO:app.routers.ifax:================================================================================
+INFO:app.routers.ifax:📨 Incoming fax webhook received
+INFO:app.routers.ifax:Headers: {'host': '6f1d95cee604.ngrok.app', 'user-agent': 'curl/7.61.1', 'content-length': '301', 'accept': 'application/json', 'content-type': 'application/json', 'x-forwarded-for': '52.26.228.122', 'x-forwarded-host': '6f1d95cee604.ngrok.app', 'x-forwarded-proto': 'https', 'accept-encoding': 'gzip'}
+INFO:app.routers.ifax:Raw payload: {'direction': 'inbound', 'jobId': 9889892, 'transactionId': 12055132, 'faxCallLength': 29, 'faxCallStart': 1762897589, 'faxCallEnd': 1762897618, 'faxTotalPages': 2, 'faxReceivedPages': 2, 'faxStatus': 'received', 'success': True, 'fromNumber': '+19383364787', 'toNumber': '+16177168476', 'code': 0, 'message': 'NORMAL_CLEARING'}
+INFO:app.routers.ifax:✅ Valid payload: JobID=9889892, TransactionID=12055132, From=+19383364787, Pages=2
+INFO:app.routers.ifax:✅ Created FaxFile record: ID=26, JobID=9889892
+INFO:app.routers.ifax:✅ Queued background processing for FaxID=26, JobID=9889892
+INFO:app.routers.ifax:================================================================================
+[32mINFO[0m:     52.26.228.122:0 - "[1mPOST /ifax/receive HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.ifax:🚀 Starting background processing for FaxID=26
+INFO:app.services.fax_processor.IncomingFaxProcessor:🔄 Starting fax processing: JobID=9889892, FaxID=26
+INFO:app.services.fax_processor.IncomingFaxProcessor:📥 Step 1/6: Downloading fax PDF...
+INFO:app.services.ifax_service:Downloading fax: jobId=9889892, transactionId=12055132
+INFO:app.services.ifax_service:Fax downloaded successfully to: /Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend/received_faxes/9889892.pdf
+INFO:app.services.fax_processor.IncomingFaxProcessor:✅ Downloaded to: /Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend/received_faxes/9889892.pdf
+INFO:app.services.fax_processor.IncomingFaxProcessor:📄 Step 2/6: Extracting text via OCR...
+INFO:app.utils.ocr:Starting OCR on: /Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend/received_faxes/9889892.pdf
+INFO:app.utils.ocr:Converted PDF to 2 page(s)
+INFO:app.utils.ocr:OCR complete: extracted 874 total characters
+INFO:app.services.fax_processor.IncomingFaxProcessor:✅ Extracted 874 characters of text
+INFO:app.services.fax_processor.IncomingFaxProcessor:💾 Step 3/6: Updating fax record in database...
+INFO:app.services.fax_processor.IncomingFaxProcessor:✅ Fax record updated
+INFO:app.services.fax_processor.IncomingFaxProcessor:🔍 Step 4/6: Parsing patient information...
+WARNING:app.utils.ocr:Could not parse DOB from text
+INFO:app.utils.ocr:Parsed: first_name=MD, last_name=Gaston, dob=None
+WARNING:app.services.fax_processor.IncomingFaxProcessor:Incomplete patient info parsed: first=MD, last=Gaston, dob=None
+WARNING:app.services.fax_processor.IncomingFaxProcessor:⚠️ No patient match found
+INFO:app.routers.ifax:✅ Background processing complete for FaxID=26: {'success': False, 'fax_id': 26, 'patient_matched': False, 'patient_id': None, 'provider_matched': False, 'provider_request_ids': [], 'request_completed': False, 'completed_request_ids': [], 'errors': ['Could not match patient from fax content']}
+ERROR:app.routers.ifax:⚠️ Processing had errors: ['Could not match patient from fax content']
+[32mINFO[0m:     127.0.0.1:50799 - "[1mGET /standalone.html HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50799 - "[1mGET /standalone.html HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50801 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m

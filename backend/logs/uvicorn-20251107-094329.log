@@ -1,0 +1,37 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m4813[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m4816[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:50292 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50289 - "[1mGET /status/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50293 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:50295 - "[1mGET /portal/3b7198cd-0468-4e7f-a59a-9efd09f54d4f HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50295 - "[1mGET /status/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50298 - "[1mPOST /cancel-request/5 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50298 - "[1mGET /search-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+ERROR:app.services.hospital_directory:Medicare API error: HTTPSConnectionPool(host='data.medicare.gov', port=443): Max retries exceeded with url: /resource/xubh-q36u.json?zip_code=02114&%24limit=50 (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x107d80390>: Failed to resolve 'data.medicare.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+[32mINFO[0m:     127.0.0.1:50302 - "[1mPOST /search-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50302 - "[1mGET /review-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.ifax_service:Sending fax to: +1-938-336-4787 (formatted: +19383364787)
+INFO:app.services.ifax_service:Added file to fax: cover_rr6_prov32.pdf (2420 chars)
+INFO:app.services.ifax_service:Added file to fax: release_patient_5.pdf (2712 chars)
+INFO:app.services.ifax_service:Webhook configured: https://veritasone.net/ifax/outbound-status
+INFO:app.services.ifax_service:Sending fax request: {'recipient': {'faxNumber': '+19383364787'}, 'files': [{'name': 'cover_rr6_prov32.pdf', 'size': 2420}, {'name': 'release_patient_5.pdf', 'size': 2712}], 'coverPage': {'text': 'Medical Records Request for Brandon Gaston'}, 'webhook': {'statusUrl': 'https://veritasone.net/ifax/outbound-status'}}
+INFO:app.services.ifax_service:iFax API response: 200
+INFO:app.services.ifax_service:iFax API response data: {'status': 0, 'code': 120012, 'message': 'The faxNumber field is required.,'}
+ERROR:app.services.ifax_service:❌ Fax send failed: The faxNumber field is required.,
+ERROR:app.services.ifax_service:Full response: {'status': 0, 'code': 120012, 'message': 'The faxNumber field is required.,'}
+ERROR:app.routers.web:❌ Fax failed to Test (+1-938-336-4787): The faxNumber field is required.,
+ERROR:app.routers.web:Full response: {'success': False, 'error': 'api_error', 'message': 'The faxNumber field is required.,', 'response': {'status': 0, 'code': 120012, 'message': 'The faxNumber field is required.,'}}
+[32mINFO[0m:     127.0.0.1:50310 - "[1mPOST /review-providers/5 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50310 - "[1mGET /status/6 HTTP/1.1[0m" [32m200 OK[0m
+[33mWARNING[0m:  WatchFiles detected changes in 'app/services/ifax_service.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m4816[0m]
+[32mINFO[0m:     Started server process [[36m5053[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.

@@ -1,0 +1,25 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m3935[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m3938[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:49581 - "[1mGET / HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:49582 - "[1mGET /docs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49581 - "[1mGET /openapi.json HTTP/1.1[0m" [32m200 OK[0m
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/web.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m3938[0m]
+[32mINFO[0m:     Started server process [[36m4341[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/database/db.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m4341[0m]
+[32mINFO[0m:     Started server process [[36m4344[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.

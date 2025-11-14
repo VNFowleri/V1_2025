@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Medical Records Portal - Veritas One</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Additional styles for the compile all button */
+        .compile-all-section {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .compile-all-button {
+            background: #4caf50;
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .compile-all-button:hover {
+            background: #45a049;
+        }
+
+        .compile-all-button:active {
+            background: #3d8b40;
+        }
+
+        .records-info {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .records-stat {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .records-stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .records-stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .date-range {
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Veritas One</h1>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>Your Medical Records Portal</h2>
+            <p><strong>Patient:</strong> {{ patient.first_name }} {{ patient.last_name }}</p>
+            <p><strong>Date of Birth:</strong> {{ patient.date_of_birth.strftime('%m/%d/%Y') if patient.date_of_birth else 'Not provided' }}</p>
+        </div>
+
+        <!-- NEW: Compile All Records Section -->
+        {% if records_summary.total_records > 0 %}
+        <div class="compile-all-section">
+            <h3>📚 Complete Medical Record</h3>
+            <p>Download all your medical records in one chronologically-ordered PDF</p>
+
+            <div class="records-info">
+                <div class="records-stat">
+                    <div class="records-stat-label">Total Records</div>
+                    <div class="records-stat-value">{{ records_summary.total_records }}</div>
+                </div>
+
+                {% if records_summary.records_with_encounter_date > 0 %}
+                <div class="records-stat">
+                    <div class="records-stat-label">Records with Dates</div>
+                    <div class="records-stat-value">{{ records_summary.records_with_encounter_date }}</div>
+                </div>
+                {% endif %}
+
+                {% if records_summary.date_range %}
+                <div class="records-stat">
+                    <div class="records-stat-label">Date Range</div>
+                    <div class="records-stat-value">
+                        {{ records_summary.date_range.earliest.strftime('%Y') }} -
+                        {{ records_summary.date_range.latest.strftime('%Y') }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if records_summary.date_range %}
+            <div class="date-range">
+                Records span from {{ records_summary.date_range.earliest.strftime('%B %d, %Y') }}
+                to {{ records_summary.date_range.latest.strftime('%B %d, %Y') }}
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 15px;">
+                <a href="/portal/{{ patient.uuid }}/compile-all">
+                    <button class="compile-all-button">
+                        📥 Download All Records (Chronologically Ordered)
+                    </button>
+                </a>
+            </div>
+            <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                ℹ️ Records are ordered by the date medical services were provided, not by request date
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Per-Request Compiled Packages -->
+        {% if requests %}
+        <div class="card">
+            <h3>📋 Record Requests</h3>
+            <p>Individual requests and their compiled records</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Request ID</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Compiled Package</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td>{{ req.id }}</td>
+                        <td>
+                            {% if req.status == 'complete' %}
+                            <span style="color: #4caf50;">✅ Complete</span>
+                            {% elif req.status == 'in_progress' %}
+                            <span style="color: #ff9800;">⏳ In Progress</span>
+                            {% else %}
+                            <span style="color: #666;">{{ req.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ req.created_at.strftime('%m/%d/%Y %H:%M') if req.created_at else 'Unknown' }}</td>
+                        <td>
+                            {% if req.compiled_pdf_path %}
+                            <a href="/portal/{{ patient.uuid }}/download/{{ req.id }}">
+                                <button>📥 Download</button>
+                            </a>
+                            {% else %}
+                            <span style="color: #999;">Pending...</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Individual Faxes -->
+        {% if faxes %}
+        <div class="card">
+            <h3>📄 Individual Records Received</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Received</th>
+                        <th>Encounter Date</th>
+                        <th>From</th>
+                        <th>Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fax in faxes %}
+                    <tr>
+                        <td>{{ fax.id }}</td>
+                        <td>{{ fax.received_time.strftime('%m/%d/%Y %H:%M') if fax.received_time else 'Unknown' }}</td>
+                        <td>
+                            {% if fax.encounter_date %}
+                            <strong>{{ fax.encounter_date.strftime('%m/%d/%Y') }}</strong>
+                            {% else %}
+                            <span style="color: #999;">Not found</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ fax.sender or 'Unknown' }}</td>
+                        <td>
+                            <a href="/portal/{{ patient.uuid }}/fax/{{ fax.id }}">
+                                <button>📄 Open PDF</button>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Status link if active request -->
+        {% if active_request and status_url %}
+        <div class="card">
+            <p><a href="{{ status_url }}">View detailed status of active request →</a></p>
+        </div>
+        {% endif %}
+
+        <!-- New request button -->
+        <div class="card">
+            <p><a href="{{ new_request_url }}"><button>🏥 Request New Medical Records</button></a></p>
+        </div>
+    </div>
+</body>
+</html>

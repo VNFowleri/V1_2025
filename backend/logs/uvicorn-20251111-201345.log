@@ -1,0 +1,106 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m1612[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m1615[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:49489 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49490 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:49490 - "[1mGET /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49493 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49497 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49497 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49499 - "[1mPOST /register HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:49499 - "[1mGET /consent/14 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49502 - "[1mPOST /consent/14 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:49502 - "[1mGET /search-providers/14 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49504 - "[1mGET /review-providers/14 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49506 - "[1mPOST /review-providers/14 HTTP/1.1[0m" [91m500 Internal Server Error[0m
+[31mERROR[0m:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend/app/routers/web.py", line 410, in review_providers_submit
+    provider = Provider(
+               ^^^^^^^^^
+  File "<string>", line 4, in __init__
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state.py", line 571, in _initialize_instance
+    with util.safe_reraise():
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state.py", line 569, in _initialize_instance
+    manager.original_init(*mixed[1:], **kwargs)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/decl_base.py", line 2167, in _declarative_constructor
+    raise TypeError(
+TypeError: 'medical_records_fax' is an invalid keyword argument for Provider
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/web.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m1615[0m]
+[32mINFO[0m:     Started server process [[36m1847[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/web.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m1847[0m]
+[32mINFO[0m:     Started server process [[36m1859[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:49546 - "[1mGET /review-providers/14 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.ifax_service:Sending fax to: +1-938-336-4787 (formatted: +19383364787)
+INFO:app.services.ifax_service:Added file to fax: cover_rr8_prov34.pdf (2408 chars)
+INFO:app.services.ifax_service:Added file to fax: release_patient_14.pdf (2704 chars)
+INFO:app.services.ifax_service:Webhook configured: https://veritasone.net/ifax/outbound-status
+INFO:app.services.ifax_service:Sending fax request: {'faxNumber': '+19383364787', 'files': [{'name': 'cover_rr8_prov34.pdf', 'size': 2408}, {'name': 'release_patient_14.pdf', 'size': 2704}], 'coverPage': {'text': 'Medical Records Request for John Smith'}, 'webhook': {'statusUrl': 'https://veritasone.net/ifax/outbound-status'}}
+INFO:app.services.ifax_service:iFax API response: 200
+INFO:app.services.ifax_service:iFax API response data: {'status': 1, 'message': 'Fax processed for sending', 'data': {'jobId': 41007668}}
+INFO:app.services.ifax_service:✅ Fax queued successfully! JobID: 41007668
+INFO:app.routers.web:✅ Fax queued to Test hospital (+1-938-336-4787): JobID 41007668
+[32mINFO[0m:     127.0.0.1:49550 - "[1mPOST /review-providers/14 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:49550 - "[1mGET /status/8 HTTP/1.1[0m" [32m200 OK[0m

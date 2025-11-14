@@ -1,0 +1,131 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m2596[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m2599[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:49776 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:49775 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49777 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:49776 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:49776 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: 'Mass gen', City: '', State: '', ZIP: ''
+INFO:app.routers.web:Found 0 hospitals
+[32mINFO[0m:     127.0.0.1:49780 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: '', City: 'boston', State: '', ZIP: ''
+ERROR:app.services.hospital_directory:Medicare API error: HTTPSConnectionPool(host='data.medicare.gov', port=443): Max retries exceeded with url: /resource/xubh-q36u.json?%24limit=50&%24where=upper%28city%29+%3D+%27BOSTON%27 (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x119d45090>: Failed to resolve 'data.medicare.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+INFO:app.routers.web:Found 10 hospitals
+[32mINFO[0m:     127.0.0.1:49784 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: 'MGH', City: 'boston', State: '', ZIP: ''
+ERROR:app.services.hospital_directory:Medicare API error: HTTPSConnectionPool(host='data.medicare.gov', port=443): Max retries exceeded with url: /resource/xubh-q36u.json?%24limit=50&%24where=upper%28city%29+%3D+%27BOSTON%27 (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x119d36a10>: Failed to resolve 'data.medicare.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MGH
+INFO:app.services.medical_records_finder:Searching medical records fax for: MGH
+INFO:app.services.medical_records_finder:Google searching for medical records form: MGH
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MGH
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MGH
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MGH
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MGH
+INFO:app.routers.web:Found 1 hospitals
+[32mINFO[0m:     127.0.0.1:49788 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49792 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: 'Beth Israel', City: '', State: '', ZIP: ''
+INFO:app.routers.web:Found 0 hospitals
+[32mINFO[0m:     127.0.0.1:49794 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49794 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: 'BID', City: '', State: '', ZIP: ''
+INFO:app.routers.web:Found 0 hospitals
+[32mINFO[0m:     127.0.0.1:49794 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49794 - "[1mGET /review-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49798 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: 'Massachusetts General Hospital', City: '', State: '', ZIP: ''
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Searching medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Google searching for medical records form: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Searching medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Google searching for medical records form: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Searching medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Google searching for medical records form: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Searching medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Google searching for medical records form: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Searching medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Google searching for medical records form: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Searching medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Google searching for medical records form: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.hospital_directory:Attempting to find medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Searching medical records fax for: MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.services.medical_records_finder:Google searching for medical records form: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Searching for HIM department: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+INFO:app.services.medical_records_finder:Finding website for: MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.medical_records_finder:Google Custom Search API not configured - using placeholder
+WARNING:app.services.medical_records_finder:Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+WARNING:app.services.hospital_directory:❌ Could not find medical records fax for MASSACHUSETTS GENERAL HOSPITAL
+INFO:app.routers.web:Found 10 hospitals
+[32mINFO[0m:     127.0.0.1:49800 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m

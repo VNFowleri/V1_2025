@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Register</h2>
+<form method="post" action="/register" class="form">
+  <label>First name <input name="first_name" required></label>
+  <label>Last name <input name="last_name" required></label>
+  <label>Email <input name="email" type="email"></label>
+  <label>Phone <input name="phone"></label>
+  <label>Date of birth <input name="dob" type="date" required></label>
+  <button type="submit" class="btn">Continue</button>
+</form>
+{% endblock %}

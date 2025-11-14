@@ -1,0 +1,33 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m6744[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m6747[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:51624 - "[1mGET /docs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:51624 - "[1mGET /openapi.json HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:51626 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:51627 - "[1mGET /portal/3842f649-fcc0-43ac-98fe-087392ba67ff HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:51626 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+INFO:app.services.medical_records_compiler:📚 Starting compilation of all records for patient 14
+INFO:app.services.medical_records_compiler:Found 2 fax file(s) for patient 14
+INFO:app.services.medical_records_compiler:📅 Records will be compiled in this order:
+INFO:app.services.medical_records_compiler:  1. Fax ID=30, Received: 2025-11-12
+INFO:app.services.medical_records_compiler:  2. Fax ID=31, Received: 2025-11-12
+
+
+
+
+
+
+
+
+
+
+
+
+INFO:app.services.medical_records_compiler:🔗 Merging 2 PDFs into: storage/VeritasOne_AllRecords_Smith_3842f649-fcc0-43ac-98fe-087392ba67ff.pdf
+INFO:app.services.medical_records_compiler:✅ Successfully compiled 2 record(s) for patient 14
+INFO:app.services.medical_records_compiler:   Output: storage/VeritasOne_AllRecords_Smith_3842f649-fcc0-43ac-98fe-087392ba67ff.pdf
+INFO:app.services.medical_records_compiler:   Ordered by encounter date (oldest → newest)
+[32mINFO[0m:     127.0.0.1:51629 - "[1mGET /portal/3842f649-fcc0-43ac-98fe-087392ba67ff/compile-all HTTP/1.1[0m" [32m200 OK[0m

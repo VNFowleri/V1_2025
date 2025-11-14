@@ -1,0 +1,24 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-dotenv==1.0.1
+SQLAlchemy==2.0.35
+greenlet==3.0.3
+asyncpg==0.29.0
+aiosqlite==0.20.0
+pydantic==1.10.15
+requests==2.32.3
+pytesseract==0.3.13
+pdf2image==1.17.0
+Pillow==10.4.0
+reportlab==4.2.5
+Jinja2==3.1.4
+email-validator==2.2.0
+certifi==2024.8.30
+PyPDF2==3.0.1
+python-multipart==0.0.20
+
+# New dependencies v2.0
+beautifulsoup4==4.12.3  # For web scraping medical records forms
+lxml==5.1.0  # Parser for BeautifulSoup
+rapidfuzz==3.6.1  # Fast fuzzy string matching for hospital name search
+html5lib==1.1  # Alternative HTML parser

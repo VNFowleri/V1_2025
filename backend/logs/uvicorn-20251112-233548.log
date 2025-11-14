@@ -1,0 +1,6 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Veritas_One_2025/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m6551[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m6554[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.

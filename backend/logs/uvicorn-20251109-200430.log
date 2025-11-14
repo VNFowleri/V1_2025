@@ -1,0 +1,58 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m6453[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m6456[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:52114 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52116 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52114 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:52114 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52114 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52114 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52120 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52120 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52120 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52120 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52121 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52121 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52121 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:52121 - "[1mGET /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52122 - "[1mPOST /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52123 - "[1mPOST /login HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52123 - "[1mGET /portal/c5d1e7e4-f9a8-43b4-a3f8-1f99236ab9ff HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52123 - "[1mGET /search-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: 'Beth isreal', City: '', State: '', ZIP: ''
+INFO:app.routers.web:Found 0 hospitals
+[32mINFO[0m:     127.0.0.1:52125 - "[1mPOST /search-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: 'Beth isreal', City: 'boston', State: '', ZIP: ''
+ERROR:app.services.hospital_directory:Medicare API error: HTTPSConnectionPool(host='data.medicare.gov', port=443): Max retries exceeded with url: /resource/xubh-q36u.json?%24limit=50&%24where=upper%28city%29+%3D+%27BOSTON%27 (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x11c932150>: Failed to resolve 'data.medicare.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+INFO:app.routers.web:Found 0 hospitals
+[32mINFO[0m:     127.0.0.1:52127 - "[1mPOST /search-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.routers.web:Hospital search - Query: '', City: 'boston', State: '', ZIP: ''
+ERROR:app.services.hospital_directory:Medicare API error: HTTPSConnectionPool(host='data.medicare.gov', port=443): Max retries exceeded with url: /resource/xubh-q36u.json?%24limit=50&%24where=upper%28city%29+%3D+%27BOSTON%27 (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x11c97ced0>: Failed to resolve 'data.medicare.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+INFO:app.routers.web:Found 10 hospitals
+[32mINFO[0m:     127.0.0.1:52130 - "[1mPOST /search-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52133 - "[1mGET /review-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:53001 - "[1mGET /standalone.html HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53001 - "[1mGET /standalone.html HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:53003 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:55060 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55060 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55060 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:55063 - "[1mGET /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55065 - "[1mPOST /login HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:55065 - "[1mGET /portal/c5d1e7e4-f9a8-43b4-a3f8-1f99236ab9ff HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55065 - "[1mGET /search-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55068 - "[1mGET /review-providers/11 HTTP/1.1[0m" [32m200 OK[0m

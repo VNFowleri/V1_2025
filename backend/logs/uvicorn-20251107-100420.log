@@ -1,0 +1,102 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m5081[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m5084[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:50341 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50342 - "[1mGET /status/6 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50342 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50341 - "[1mGET /status/6 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50344 - "[1mPOST /cancel-request/6 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50344 - "[1mGET /search-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50347 - "[1mPOST /search-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50352 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50351 - "[1mGET /portal/3b7198cd-0468-4e7f-a59a-9efd09f54d4f HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50351 - "[1mGET /search-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50354 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50354 - "[1mGET /portal/3b7198cd-0468-4e7f-a59a-9efd09f54d4f HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50356 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50356 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50359 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50358 - "[1mPOST /register HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50358 - "[1mGET /consent/11 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50361 - "[1mPOST /consent/11 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50361 - "[1mGET /search-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50361 - "[1mGET /review-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.ifax_service:Sending fax to: +1-938-336-4787 (formatted: +19383364787)
+INFO:app.services.ifax_service:Added file to fax: cover_rr7_prov33.pdf (2404 chars)
+INFO:app.services.ifax_service:Added file to fax: release_patient_11.pdf (2688 chars)
+INFO:app.services.ifax_service:Webhook configured: https://veritasone.net/ifax/outbound-status
+INFO:app.services.ifax_service:Sending fax request: {'faxNumber': '+19383364787', 'files': [{'name': 'cover_rr7_prov33.pdf', 'size': 2404}, {'name': 'release_patient_11.pdf', 'size': 2688}], 'coverPage': {'text': 'Medical Records Request for test test'}, 'webhook': {'statusUrl': 'https://veritasone.net/ifax/outbound-status'}}
+INFO:app.services.ifax_service:iFax API response: 200
+INFO:app.services.ifax_service:iFax API response data: {'status': 1, 'message': 'Fax processed for sending', 'data': {'jobId': 40888729}}
+INFO:app.services.ifax_service:✅ Fax queued successfully! JobID: 40888729
+INFO:app.routers.web:✅ Fax queued to test (+1-938-336-4787): JobID 40888729
+[32mINFO[0m:     127.0.0.1:50364 - "[1mPOST /review-providers/11 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50364 - "[1mGET /status/7 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50367 - "[1mGET /portal/c5d1e7e4-f9a8-43b4-a3f8-1f99236ab9ff HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50367 - "[1mGET /status/7 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50457 - "[1mPOST /cancel-request/7 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50457 - "[1mGET /search-providers/11 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50459 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50459 - "[1mGET /portal/c5d1e7e4-f9a8-43b4-a3f8-1f99236ab9ff HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50513 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50513 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50513 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50513 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50519 - "[1mPOST /register HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50519 - "[1mGET /consent/12 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50519 - "[1mPOST /consent/12 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50519 - "[1mGET /search-providers/12 HTTP/1.1[0m" [32m200 OK[0m
+ERROR:app.services.hospital_directory:Medicare API error: HTTPSConnectionPool(host='data.medicare.gov', port=443): Max retries exceeded with url: /resource/xubh-q36u.json?city=BOSTON&%24limit=50 (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x1097280d0>: Failed to resolve 'data.medicare.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+[32mINFO[0m:     127.0.0.1:50522 - "[1mPOST /search-providers/12 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50522 - "[1mGET /search-providers/12 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50524 - "[1mPOST /search-providers/12 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50552 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50552 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50552 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50562 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50610 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50610 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50612 - "[1mPOST /register HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50612 - "[1mGET /consent/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50615 - "[1mPOST /consent/13 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50615 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.hospital_directory:Web search query: mass gen hospital medical records fax
+[32mINFO[0m:     127.0.0.1:50617 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50617 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50617 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50623 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50622 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50625 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50625 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50625 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50625 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.hospital_directory:Web search query: mass general hospital hospital medical records fax
+[32mINFO[0m:     127.0.0.1:50627 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50631 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50764 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50763 - "[1mGET /portal/aa37909d-cc4f-444b-8350-9189872c6a9d HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50765 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:50769 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.hospital_directory:Web search query: Massachusetts General Hospital  hospital medical records fax
+[32mINFO[0m:     127.0.0.1:50771 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50771 - "[1mGET /review-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50771 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.hospital_directory:Web search query: Mass General Hospital hospital medical records fax
+[32mINFO[0m:     127.0.0.1:50774 - "[1mPOST /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50777 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50777 - "[1mGET /search-providers/13 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /apple-touch-icon.png HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:50779 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m

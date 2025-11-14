@@ -1,0 +1,46 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m9651[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m9654[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'cleanup_duplicates.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m9654[0m]
+[32mINFO[0m:     Started server process [[36m9677[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/web.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m9677[0m]
+[32mINFO[0m:     Started server process [[36m9750[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/portal.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m9750[0m]
+[32mINFO[0m:     Started server process [[36m9758[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/ifax.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m9758[0m]
+[32mINFO[0m:     Started server process [[36m9767[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/providers.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m9767[0m]
+[32mINFO[0m:     Started server process [[36m9775[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.

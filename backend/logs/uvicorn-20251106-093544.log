@@ -1,0 +1,186 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m6577[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m6580[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:50264 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50264 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50267 - "[1mPOST /register HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:50267 - "[1mGET /consent/9 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:50267 - "[1mPOST /consent/9 HTTP/1.1[0m" [91m500 Internal Server Error[0m
+[31mERROR[0m:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.NotNullViolationError: null value in column "consent_pdf_path" of relation "patient_consents" violates not-null constraint
+DETAIL:  Failing row contains (5, 9, v1, null, null, 2025-11-06 19:36:18.385041+00, null, null).
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "consent_pdf_path" of relation "patient_consents" violates not-null constraint
+DETAIL:  Failing row contains (5, 9, v1, null, null, 2025-11-06 19:36:18.385041+00, null, null).
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/app/routers/web.py", line 110, in consent_submit
+    await db.commit()
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    await greenlet_spawn(self.sync_session.commit)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/Users/brandongaston/Downloads/medfax-app (4)/backend/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "consent_pdf_path" of relation "patient_consents" violates not-null constraint
+DETAIL:  Failing row contains (5, 9, v1, null, null, 2025-11-06 19:36:18.385041+00, null, null).
+[SQL: INSERT INTO patient_consents (patient_id, release_text_version, consent_pdf_path, signature_image_path, signed_at, ip_address, user_agent) VALUES ($1::INTEGER, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::TIMESTAMP WITH TIME ZONE, $6::VARCHAR, $7::VARCHAR) RETURNING patient_consents.id]
+[parameters: (9, 'v1', None, None, datetime.datetime(2025, 11, 6, 14, 36, 18, 385041), None, None)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/web.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m6580[0m]
+[32mINFO[0m:     Started server process [[36m6602[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.

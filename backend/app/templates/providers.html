@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Where have you received care?</h2>
+<form method="post" action="" class="form">
+  <label>Cities (comma-separated) <input name="cities" placeholder="e.g., Austin, Seattle"></label>
+  <label>ZIP Codes (comma-separated) <input name="zips" placeholder="e.g., 94103, 78701"></label>
+  <label>Specific doctors/hospitals (JSON) <textarea name="manual_providers_json" placeholder='[{"name":"Dr Smith","fax":"+15551234567"}]'></textarea></label>
+  <button type="submit" class="btn">Start requests</button>
+</form>
+<p class="small">We will search public directories for fax numbers where available. Some locations may require manual verification.</p>
+{% endblock %}

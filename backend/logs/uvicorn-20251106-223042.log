@@ -1,0 +1,75 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/Users/brandongaston/Downloads/medfax-app (4)/backend']
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m9955[0m] using [36m[1mWatchFiles[0m
+[32mINFO[0m:     Started server process [[36m9958[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:52552 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52552 - "[1mGET /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52554 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52557 - "[1mPOST /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52557 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52557 - "[1mGET /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52557 - "[1mPOST /login HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52557 - "[1mGET /portal/3b7198cd-0468-4e7f-a59a-9efd09f54d4f HTTP/1.1[0m" [32m200 OK[0m
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/web.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m9958[0m]
+[32mINFO[0m:     Started server process [[36m10330[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/portal.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m10330[0m]
+[32mINFO[0m:     Started server process [[36m10342[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:52696 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52697 - "[1mGET /status/1 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52696 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:52697 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:52701 - "[1mGET /portal/3b7198cd-0468-4e7f-a59a-9efd09f54d4f HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52704 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52704 - "[1mGET /status/1 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52704 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52704 - "[1mGET /status/1 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52707 - "[1mGET /docs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52707 - "[1mGET /openapi.json HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52709 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52709 - "[1mGET /static/css/styles.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52709 - "[1mGET /favicon.ico HTTP/1.1[0m" [31m404 Not Found[0m
+[32mINFO[0m:     127.0.0.1:52709 - "[1mGET /register HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52711 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52711 - "[1mGET /login HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52713 - "[1mPOST /login HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52713 - "[1mGET /portal/3b7198cd-0468-4e7f-a59a-9efd09f54d4f HTTP/1.1[0m" [32m200 OK[0m
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/web.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m10342[0m]
+[32mINFO[0m:     Started server process [[36m10426[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[33mWARNING[0m:  WatchFiles detected changes in 'app/routers/portal.py'. Reloading...
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m10426[0m]
+[32mINFO[0m:     Started server process [[36m10437[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     127.0.0.1:52771 - "[1mGET / HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52771 - "[1mGET /status/1 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52780 - "[1mPOST /cancel-request/1 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52780 - "[1mGET /search-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+INFO:app.services.hospital_directory:Web search query: Massachusetts General Hospital  hospital medical records fax
+[32mINFO[0m:     127.0.0.1:52782 - "[1mPOST /search-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52782 - "[1mGET /review-providers/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52806 - "[1mPOST /review-providers/5 HTTP/1.1[0m" [33m303 See Other[0m
+[32mINFO[0m:     127.0.0.1:52806 - "[1mGET /status/5 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52899 - "[1mGET /portal/3b7198cd-0468-4e7f-a59a-9efd09f54d4f HTTP/1.1[0m" [32m200 OK[0m

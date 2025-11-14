@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+    <form method="post" action="{{ cancel_url }}" style="display: inline;">
+    <button type="submit" onclick="return confirm('Cancel and start over?')">
+        ❌ Cancel & Start New
+    </button>
+</form>
+<a href="{{ add_providers_url }}">➕ Add More Providers</a>
+<a href="{{ portal_url }}">📁 View Portal</a>
+<h2>Request Status</h2>
+{% if rr %}
+<p><strong>Request ID:</strong> {{ rr.id }}<br>
+<strong>Status:</strong> {{ rr.status }}</p>
+{% if rr and rr.patient %}
+  <p><strong>Portal link:</strong> <a href="/portal/{{ rr.patient.uuid }}" target="_blank">/portal/{{ rr.patient.uuid }}</a></p>
+{% endif %}
+{% if rr and rr.compiled_pdf_path %}
+  <p><a class="btn" href="/portal/{{ rr.patient.uuid }}/download/{{ rr.id }}">Download compiled PDF</a></p>
+{% endif %}
+<table>
+  <thead><tr><th>Provider</th><th>Fax</th><th>Status</th><th>Sent</th><th>Responded</th></tr></thead>
+  <tbody>
+  {% for pr in prs %}
+    <tr>
+      <td>{{ pr.provider.name if pr.provider else "Unknown" }}</td>
+      <td>{{ pr.fax_number_used or (pr.provider.fax if pr.provider) }}</td>
+      <td>{{ pr.status }}</td>
+      <td>{{ pr.sent_at }}</td>
+      <td>{{ pr.responded_at }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Request not found.</p>
+{% endif %}
+{% endblock %}
