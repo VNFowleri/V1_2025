@@ -1,4 +1,4 @@
-# app/routers/web.py - v2.0
+# app/routers/web.py - v2.0 - FIXED
 # Enhanced with improved hospital search, medical records fax discovery, and professional consent forms
 
 import os
@@ -11,7 +11,6 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-
 from sqlalchemy import select, or_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,6 +52,7 @@ has already been taken. This authorization will expire 180 days from the date of
 # -------------------------
 # Helper Functions
 # -------------------------
+
 def get_patient_from_session(patient_uuid: str, db: AsyncSession):
     """Get patient from session UUID."""
     return patient_uuid
@@ -61,6 +61,7 @@ def get_patient_from_session(patient_uuid: str, db: AsyncSession):
 # -------------------------
 # Home / Landing
 # -------------------------
+
 @router.get("/", response_class=HTMLResponse)
 async def index(
         request: Request,
@@ -68,11 +69,9 @@ async def index(
         db: AsyncSession = Depends(get_db)
 ) -> HTMLResponse:
     """Landing page - or redirect to status if logged in with active request."""
-
     if patient_uuid:
         result = await db.execute(select(Patient).where(Patient.uuid == patient_uuid))
         patient = result.scalars().first()
-
         if patient:
             req_result = await db.execute(
                 select(RecordRequest)
@@ -81,7 +80,6 @@ async def index(
                 .order_by(RecordRequest.created_at.desc())
             )
             active_request = req_result.scalars().first()
-
             if active_request:
                 return RedirectResponse(url=f"/status/{active_request.id}", status_code=303)
             else:
@@ -93,6 +91,7 @@ async def index(
 # -------------------------
 # Authentication
 # -------------------------
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_form(request: Request) -> HTMLResponse:
     """Login page."""
@@ -120,7 +119,6 @@ async def login_submit(
 
     response = RedirectResponse(url=f"/portal/{patient.uuid}", status_code=303)
     response.set_cookie(key="patient_uuid", value=str(patient.uuid), httponly=True, max_age=86400 * 30)
-
     return response
 
 
@@ -132,25 +130,23 @@ async def verify_login(
 ) -> RedirectResponse:
     """Verify magic link and log user in."""
     email = verify_magic_link(token)
-
     if not email:
         raise HTTPException(status_code=400, detail="Invalid or expired login link")
 
     result = await db.execute(select(Patient).where(Patient.email == email))
     patient = result.scalars().first()
-
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
     response = RedirectResponse(url=f"/portal/{patient.uuid}", status_code=303)
     response.set_cookie(key="patient_uuid", value=str(patient.uuid), httponly=True, max_age=86400 * 30)
-
     return response
 
 
 # -------------------------
 # Registration
 # -------------------------
+
 @router.get("/register", response_class=HTMLResponse)
 async def register_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse("register.html", {"request": request})
@@ -199,13 +195,13 @@ async def register_submit(
 
     response = RedirectResponse(url=f"/consent/{patient.id}", status_code=303)
     response.set_cookie(key="patient_uuid", value=str(patient.uuid), httponly=True, max_age=86400 * 30)
-
     return response
 
 
 # -------------------------
 # Consent - ENHANCED v2.0
 # -------------------------
+
 @router.get("/consent/{patient_id}", response_class=HTMLResponse)
 async def consent_form(
         patient_id: int,
@@ -242,7 +238,6 @@ async def consent_submit(
 ) -> RedirectResponse:
     """
     Process consent signature, generate professional PDF, and save consent record.
-
     ENHANCED v2.0: Now captures initials for sensitive categories and generates
     professional HIPAA-compliant authorization documents.
     """
@@ -305,13 +300,13 @@ async def consent_submit(
     await db.commit()
 
     log.info(f"✅ Consent signed and professional PDF generated for patient {p.id}")
-
     return RedirectResponse(url=f"/search-providers/{p.id}", status_code=303)
 
 
 # -------------------------
-# Search Providers
+# Search Providers - FIXED
 # -------------------------
+
 @router.get("/search-providers/{patient_id}", response_class=HTMLResponse)
 async def search_providers_page(
         patient_id: int, request: Request, db: AsyncSession = Depends(get_db)
@@ -346,15 +341,16 @@ async def search_providers_submit(
 
     hospitals = []
 
-    # Search by name if provided
+    # FIXED: Use search_hospitals() with query parameter instead of search_hospital_by_name()
+    # search_hospitals() accepts the limit parameter, while search_hospital_by_name() does not
+    # NOTE: search_hospitals() is a synchronous function, NOT async, so we don't use 'await'
     if search_query:
-        hospitals = await search_hospital_by_name(search_query, limit=20)
-
+        hospitals = search_hospitals(query=search_query, limit=20)
     # Search by location if provided
     elif city and state:
-        hospitals = await search_hospitals(city=city, state=state, limit=20)
+        hospitals = search_hospitals(city=city, state=state, limit=20)
     elif zip_code:
-        hospitals = await search_hospitals(zip_code=zip_code, limit=20)
+        hospitals = search_hospitals(zip_code=zip_code, limit=20)
 
     return templates.TemplateResponse(
         "search_results.html",
@@ -373,6 +369,7 @@ async def search_providers_submit(
 # -------------------------
 # Review Providers
 # -------------------------
+
 @router.get("/review-providers/{patient_id}", response_class=HTMLResponse)
 async def review_providers_page(
         patient_id: int, request: Request, db: AsyncSession = Depends(get_db)
@@ -398,7 +395,6 @@ async def review_providers_submit(
 ) -> RedirectResponse:
     """
     Process selected providers and create requests.
-
     ENHANCED v2.0: Now generates professional fax cover sheets with all required
     information for HIPAA-compliant medical records requests.
     """
@@ -515,7 +511,6 @@ async def review_providers_submit(
                     f"✅ Fax sent successfully to {prov.name} "
                     f"(Fax: {prov.fax}, Job ID: {job_id})"
                 )
-
                 pr = ProviderRequest(
                     record_request_id=rr.id,
                     provider_id=prov.id,
@@ -530,7 +525,6 @@ async def review_providers_submit(
                     f"❌ Failed to send fax to {prov.name} "
                     f"(Fax: {prov.fax}): {error_msg}"
                 )
-
                 pr = ProviderRequest(
                     record_request_id=rr.id,
                     provider_id=prov.id,
@@ -544,7 +538,6 @@ async def review_providers_submit(
                 f"❌ Exception sending fax to {prov.name} "
                 f"(Fax: {prov.fax}): {e}"
             )
-
             pr = ProviderRequest(
                 record_request_id=rr.id,
                 provider_id=prov.id,
@@ -568,6 +561,7 @@ async def review_providers_submit(
 # -------------------------
 # Status page
 # -------------------------
+
 @router.get("/status/{request_id}", response_class=HTMLResponse)
 async def status_page(
         request_id: int,
@@ -585,6 +579,7 @@ async def status_page(
     )
     result = await db.execute(q)
     rr = result.unique().scalar_one_or_none()
+
     if rr is None:
         raise HTTPException(status_code=404, detail="Record request not found")
 
@@ -607,6 +602,7 @@ async def status_page(
 # -------------------------
 # Cancel Request
 # -------------------------
+
 @router.post("/cancel-request/{request_id}")
 async def cancel_request(
         request_id: int,
