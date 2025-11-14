@@ -1,50 +1,102 @@
-from dotenv import load_dotenv
-load_dotenv()
+"""
+Veritas One - FastAPI Main Application
 
-import os
+Medical records collection automation platform with:
+- Patient registration and consent
+- Provider search and selection
+- Automated fax transmission via HumbleFax
+- Incoming fax processing with OCR
+- Patient portal for records access
+"""
+
 import logging
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-from app.database.db import init_models
+# Import routers
 from app.routers import web, portal, humblefax
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Check for HumbleFax credentials
-HUMBLEFAX_ACCESS_KEY = os.getenv("HUMBLEFAX_ACCESS_KEY")
-HUMBLEFAX_SECRET_KEY = os.getenv("HUMBLEFAX_SECRET_KEY")
 
-if not HUMBLEFAX_ACCESS_KEY or not HUMBLEFAX_SECRET_KEY:
-    logger.warning(
-        "WARNING: HumbleFax credentials are missing. "
-        "Please set HUMBLEFAX_ACCESS_KEY and HUMBLEFAX_SECRET_KEY. "
-        "Outbound faxing will fail until credentials are configured."
-    )
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for startup and shutdown events.
+    """
+    # Startup
+    logger.info("🚀 Starting Veritas One application...")
+    logger.info("✅ Application started successfully")
 
-app = FastAPI(title="Veritas One API")
+    yield
 
+    # Shutdown
+    logger.info("👋 Shutting down Veritas One application...")
+
+
+# Create FastAPI app
+app = FastAPI(
+    title="Veritas One",
+    description="Medical Records Collection Automation",
+    version="3.1.0",
+    lifespan=lifespan
+)
+
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Configure appropriately for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Include routers
 app.include_router(web.router, tags=["Web"])
 app.include_router(portal.router, tags=["Portal"])
-app.include_router(humblefax.router, prefix="/humblefax", tags=["HumbleFax Webhooks"])
+app.include_router(humblefax.router, tags=["HumbleFax"])
 
-@app.on_event("startup")
-async def on_startup():
-    await init_models()
+logger.info("📡 Registered routers: web, portal, humblefax")
+
 
 @app.get("/healthz")
-async def healthz():
-    return {"ok": True}
+async def health_check():
+    """
+    Health check endpoint.
+    """
+    return {
+        "status": "healthy",
+        "version": "3.1.0",
+        "service": "veritas-one"
+    }
+
+
+@app.get("/")
+async def root():
+    """
+    Root endpoint - redirects to main landing page.
+    """
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/", status_code=307)
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    )

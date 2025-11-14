@@ -3,6 +3,7 @@ import os
 import sys
 import ssl
 import certifi
+from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -80,7 +81,6 @@ SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=F
 # Backward-compat alias; app.database.__init__ may expect this name
 AsyncSessionLocal = SessionLocal
 
-
 # --- Import models so metadata is registered for create_all ---
 # Import only models that exist in your codebase
 try:
@@ -90,6 +90,7 @@ try:
     from app.models.consent import PatientConsent  # noqa: F401, E402
     # ProviderRequest is defined inside record_request.py, not separate
     from app.models.record_request import RecordRequest, ProviderRequest  # noqa: F401, E402
+
     print("✅ Models imported successfully")
 except ImportError as e:
     print(f"⚠️  Warning: Some models could not be imported: {e}")
@@ -121,6 +122,34 @@ async def get_db() -> AsyncSession:
     Usage: def my_route(db: AsyncSession = Depends(get_db))
     """
     async with SessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
+
+@asynccontextmanager
+async def get_async_session_context():
+    """
+    Context manager to get a new database session for background tasks.
+
+    Usage in background tasks:
+        async with get_async_session_context() as db:
+            # Use db session here
+            result = await db.execute(select(Model).where(...))
+            await db.commit()
+
+    This is needed because background tasks don't have access to the
+    FastAPI dependency injection system, so we can't use Depends(get_db).
+
+    Example:
+        async def process_fax_background(fax_id: int):
+            async with get_async_session_context() as db:
+                fax = await db.get(FaxFile, fax_id)
+                fax.status = "processed"
+                await db.commit()
+    """
+    async with AsyncSessionLocal() as session:
         try:
             yield session
         finally:
