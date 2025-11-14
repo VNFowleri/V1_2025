@@ -37,3 +37,6 @@ UVICORN_CMD="uvicorn app.main:app --host ${HOST} --port ${PORT} --reload --log-l
 echo "▶︎ ${UVICORN_CMD}"
 # Stream stdout/stderr to a log file you can tail
 ${UVICORN_CMD} 2>&1 | tee "${LOG_FILE}"
+
+
+# Making a hashed edit so that git will update the file as having a new edit.
