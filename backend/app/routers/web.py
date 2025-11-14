@@ -37,7 +37,7 @@ from app.services.auth_service import (
     send_magic_link_email
 )
 
-from app.services.ifax_service import send_fax
+from app.services.humblefax_service import send_fax
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -510,7 +510,7 @@ async def review_providers_submit(
             )
 
             if res.get("success"):
-                job_id = res.get("jobId", "")
+                job_id = res.get("tmpFaxId", "")
                 log.info(
                     f"✅ Fax sent successfully to {prov.name} "
                     f"(Fax: {prov.fax}, Job ID: {job_id})"
