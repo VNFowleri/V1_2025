@@ -1,10 +1,12 @@
 """
-Updated Portal Router - v2.0
+Updated Portal Router - v2.0 - FIXED VERSION
 
 New Features:
 - Endpoint to compile all patient records (not just per-request)
 - Records ordered by encounter date
 - Summary of available records
+- FIXED: Eager loading for relationships
+- FIXED: Router initialization
 """
 
 import os
@@ -13,6 +15,7 @@ from fastapi.responses import FileResponse
 from starlette.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload  # <-- CRITICAL: Add this import
 
 from app.database.db import get_db
 from app.models.patient import Patient
@@ -20,6 +23,7 @@ from app.models.record_request import RecordRequest
 from app.models.fax_file import FaxFile
 from app.services.medical_records_compiler import compile_all_patient_records, get_patient_records_summary
 
+# ✅ CRITICAL: This line MUST come BEFORE any @router decorators
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
@@ -34,14 +38,21 @@ async def portal_home(request: Request, patient_uuid: str, db: AsyncSession = De
     - Individual faxes received
     - Button to compile ALL records
     """
+    # Get patient
     res = await db.execute(select(Patient).where(Patient.uuid == patient_uuid))
     patient = res.scalars().first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    rr_res = await db.execute(select(RecordRequest).where(RecordRequest.patient_id == patient.id))
+    # ✅ FIXED: Eagerly load provider_requests relationship to avoid greenlet error
+    rr_res = await db.execute(
+        select(RecordRequest)
+        .where(RecordRequest.patient_id == patient.id)
+        .options(selectinload(RecordRequest.provider_requests))  # <-- CRITICAL FIX
+    )
     requests = rr_res.scalars().all()
 
+    # Get faxes
     faxes_res = await db.execute(select(FaxFile).where(FaxFile.patient_id == patient.id))
     faxes = faxes_res.scalars().all()
 
@@ -60,125 +71,72 @@ async def portal_home(request: Request, patient_uuid: str, db: AsyncSession = De
         "patient": patient,
         "requests": requests,
         "faxes": faxes,
-        "records_summary": records_summary,  # NEW
+        "records_summary": records_summary,
         "active_request": active_request,
-        "new_request_url": f"/search-providers/{patient.id}",
-        "status_url": f"/status/{active_request.id}" if active_request else None
     })
 
 
-@router.get("/portal/{patient_uuid}/download/{request_id}")
-async def download_compiled(request: Request, patient_uuid: str, request_id: int, db: AsyncSession = Depends(get_db)):
+@router.post("/portal/{patient_uuid}/compile-all")
+async def compile_all_records(
+    patient_uuid: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Download compiled records for a specific request.
-
-    This downloads only the records from a specific record request.
+    Compile ALL patient records into a single PDF.
+    Not tied to any specific request.
     """
+    # Get patient
     res = await db.execute(select(Patient).where(Patient.uuid == patient_uuid))
     patient = res.scalars().first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-
-    rr = await db.get(RecordRequest, request_id)
-    if not rr or rr.patient_id != patient.id:
-        raise HTTPException(status_code=404, detail="Record request not found")
-
-    if not rr.compiled_pdf_path or not os.path.exists(rr.compiled_pdf_path):
-        raise HTTPException(status_code=404, detail="Compiled PDF not available yet")
-
-    return FileResponse(
-        rr.compiled_pdf_path,
-        filename=f"VeritasOne_Records_{patient.last_name}_{request_id}.pdf",
-        media_type="application/pdf"
-    )
-
-
-@router.get("/portal/{patient_uuid}/compile-all")
-async def compile_all_records(request: Request, patient_uuid: str, db: AsyncSession = Depends(get_db)):
-    """
-    Compile ALL medical records for a patient into a single PDF.
-
-    NEW ENDPOINT: Compiles all faxes for the patient, ordered by encounter date.
-    This is different from per-request compilation which only includes records
-    from a specific request.
-
-    The compiled PDF will have records ordered chronologically by the date
-    medical services were provided (encounter date), not by request date.
-    """
-    res = await db.execute(select(Patient).where(Patient.uuid == patient_uuid))
-    patient = res.scalars().first()
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
-
-    # Check if patient has any records
-    faxes_res = await db.execute(select(FaxFile).where(FaxFile.patient_id == patient.id))
-    faxes = faxes_res.scalars().all()
-
-    if not faxes:
-        raise HTTPException(
-            status_code=404,
-            detail="No medical records found for this patient"
-        )
 
     # Compile all records
-    compiled_path = await compile_all_patient_records(
-        patient_id=patient.id,
-        db=db,
-        output_filename=f"VeritasOne_AllRecords_{patient.last_name}_{patient_uuid}.pdf"
-    )
+    compiled_path = await compile_all_patient_records(patient.id, db)
 
-    if not compiled_path:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to compile medical records"
-        )
+    if not compiled_path or not os.path.exists(compiled_path):
+        raise HTTPException(status_code=500, detail="Failed to compile records")
 
     # Return the compiled PDF
     return FileResponse(
-        compiled_path,
-        filename=f"VeritasOne_AllRecords_{patient.last_name}.pdf",
-        media_type="application/pdf"
+        path=compiled_path,
+        media_type="application/pdf",
+        filename=f"{patient.first_name}_{patient.last_name}_all_records.pdf"
     )
 
 
-@router.get("/portal/{patient_uuid}/fax/{fax_id}")
-async def download_fax_pdf(request: Request, patient_uuid: str, fax_id: int, db: AsyncSession = Depends(get_db)):
+@router.get("/portal/{patient_uuid}/download-compiled/{request_id}")
+async def download_compiled(
+    patient_uuid: str,
+    request_id: int,
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Download a specific fax file.
-
-    This downloads an individual fax (not compiled).
+    Download a previously compiled PDF for a specific request.
     """
+    # Get patient
     res = await db.execute(select(Patient).where(Patient.uuid == patient_uuid))
     patient = res.scalars().first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    fax = await db.get(FaxFile, fax_id)
-    if not fax or fax.patient_id != patient.id:
-        raise HTTPException(status_code=404, detail="Fax not found")
+    # Get request
+    # ✅ Add eager loading if this passes to template
+    rr_res = await db.execute(
+        select(RecordRequest)
+        .where(RecordRequest.id == request_id, RecordRequest.patient_id == patient.id)
+    )
+    record_request = rr_res.scalars().first()
 
-    if not fax.file_path or not os.path.exists(fax.file_path):
-        raise HTTPException(status_code=404, detail="Fax PDF not present")
+    if not record_request:
+        raise HTTPException(status_code=404, detail="Request not found")
 
-    return FileResponse(fax.file_path, filename=f"fax_{fax.id}.pdf", media_type="application/pdf")
+    if not record_request.compiled_pdf_path or not os.path.exists(record_request.compiled_pdf_path):
+        raise HTTPException(status_code=404, detail="Compiled PDF not found")
 
-
-@router.get("/portal/{patient_uuid}/records-summary")
-async def get_records_summary(request: Request, patient_uuid: str, db: AsyncSession = Depends(get_db)):
-    """
-    Get a summary of all records for a patient.
-
-    API endpoint for AJAX requests to show record details.
-    """
-    res = await db.execute(select(Patient).where(Patient.uuid == patient_uuid))
-    patient = res.scalars().first()
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
-
-    summary = await get_patient_records_summary(patient.id, db)
-
-    return {
-        "patient_id": patient.id,
-        "patient_name": f"{patient.first_name} {patient.last_name}",
-        "summary": summary
-    }
+    return FileResponse(
+        path=record_request.compiled_pdf_path,
+        media_type="application/pdf",
+        filename=f"{patient.first_name}_{patient.last_name}_request_{request_id}.pdf"
+    )
