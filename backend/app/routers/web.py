@@ -1,20 +1,18 @@
-# app/routers/web.py - v2.0 - FIXED
-# Enhanced with improved hospital search, medical records fax discovery, and professional consent forms
-
+# app/routers/web.py - v3.0 - ENHANCED SEARCH WITH FUZZY MATCHING & PAGINATION
+# Enhanced with improved hospital search, fuzzy matching, pagination, and professional consent forms
 import os
 import json
 import base64
+import hashlib
 import logging
 from datetime import datetime
 from typing import Any, Dict, List
-
-from fastapi import APIRouter, Depends, HTTPException, Request, Form, Cookie
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, Cookie, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select, or_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.database.db import get_db
 from app.models.patient import Patient
 from app.models.consent import PatientConsent
@@ -22,10 +20,12 @@ from app.models.record_request import RecordRequest, ProviderRequest
 from app.models.provider import Provider
 from app.services.pdf_ops import generate_release_pdf, write_cover_sheet
 
-# Import enhanced hospital search (v2.0)
+# UPDATED: Import enhanced hospital search with fuzzy matching and pagination (v3.0)
 from app.services.hospital_directory import (
     search_hospitals,
-    search_hospital_by_name,
+    format_search_results_for_display,
+    cache_search_results,
+    get_cached_search_results,
     validate_fax_number,
     format_fax_number
 )
@@ -35,7 +35,6 @@ from app.services.auth_service import (
     verify_magic_link,
     send_magic_link_email
 )
-
 from app.services.humblefax_service import send_fax
 
 router = APIRouter()
@@ -56,6 +55,12 @@ has already been taken. This authorization will expire 180 days from the date of
 def get_patient_from_session(patient_uuid: str, db: AsyncSession):
     """Get patient from session UUID."""
     return patient_uuid
+
+
+def _generate_search_key(query: str = "", zip_code: str = "") -> str:
+    """Generate a unique key for caching search results."""
+    search_str = f"{query}:{zip_code}"
+    return hashlib.md5(search_str.encode()).hexdigest()
 
 
 # -------------------------
@@ -135,6 +140,7 @@ async def verify_login(
 
     result = await db.execute(select(Patient).where(Patient.email == email))
     patient = result.scalars().first()
+
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
@@ -289,7 +295,7 @@ async def consent_submit(
     # Create PatientConsent record
     consent_obj = PatientConsent(
         patient_id=p.id,
-        release_text_version="v2.0",  # UPDATED: New version tracking
+        release_text_version="v2.0",
         consent_pdf_path=release_path,
         signature_image_path=sig_path,
         signed_at=datetime.utcnow(),
@@ -304,22 +310,36 @@ async def consent_submit(
 
 
 # -------------------------
-# Search Providers - FIXED
+# Search Providers - ENHANCED v3.0 with Fuzzy Matching & Pagination
 # -------------------------
 
 @router.get("/search-providers/{patient_id}", response_class=HTMLResponse)
 async def search_providers_page(
-        patient_id: int, request: Request, db: AsyncSession = Depends(get_db)
+        patient_id: int,
+        request: Request,
+        db: AsyncSession = Depends(get_db)
 ) -> HTMLResponse:
-    """Enhanced provider search page (v2.0)."""
-    res = await db.execute(select(Patient).where(Patient.id == patient_id))
-    patient = res.scalars().first()
+    """
+    Display the enhanced provider search form.
+
+    v3.0 Features:
+    - Search by hospital name (with fuzzy matching)
+    - Search by ZIP code
+    - Removed city/state search (simplified)
+    """
+    # Verify patient exists
+    result = await db.execute(select(Patient).where(Patient.id == patient_id))
+    patient = result.scalars().first()
+
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
     return templates.TemplateResponse(
         "search_providers.html",
-        {"request": request, "patient": patient}
+        {
+            "request": request,
+            "patient": patient
+        }
     )
 
 
@@ -329,39 +349,143 @@ async def search_providers_submit(
         request: Request,
         db: AsyncSession = Depends(get_db),
         search_query: str = Form(""),
-        city: str = Form(""),
-        state: str = Form(""),
         zip_code: str = Form(""),
 ) -> HTMLResponse:
-    """Process hospital search with enhanced v2.0 features."""
-    res = await db.execute(select(Patient).where(Patient.id == patient_id))
-    patient = res.scalars().first()
+    """
+    Process hospital search with v3.0 enhanced features:
+    - Fuzzy matching for name searches (casts a broad net)
+    - ZIP code filtering
+    - Up to 200 results with pagination
+
+    This endpoint performs the search and redirects to results page 1.
+    """
+    # Verify patient exists
+    result = await db.execute(select(Patient).where(Patient.id == patient_id))
+    patient = result.scalars().first()
+
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    hospitals = []
+    # Validate we have at least one search criterion
+    search_query = search_query.strip()
+    zip_code = zip_code.strip()
 
-    # FIXED: Use search_hospitals() with query parameter instead of search_hospital_by_name()
-    # search_hospitals() accepts the limit parameter, while search_hospital_by_name() does not
-    # NOTE: search_hospitals() is a synchronous function, NOT async, so we don't use 'await'
-    if search_query:
-        hospitals = search_hospitals(query=search_query, limit=20)
-    # Search by location if provided
-    elif city and state:
-        hospitals = search_hospitals(city=city, state=state, limit=20)
-    elif zip_code:
-        hospitals = search_hospitals(zip_code=zip_code, limit=20)
+    if not search_query and not zip_code:
+        log.warning("No search criteria provided")
+        return templates.TemplateResponse(
+            "search_providers.html",
+            {
+                "request": request,
+                "patient": patient,
+                "error": "Please enter a hospital name or ZIP code to search"
+            }
+        )
+
+    # Perform the search with fuzzy matching
+    log.info(f"🔍 Searching hospitals - Query: '{search_query}', ZIP: '{zip_code}'")
+
+    try:
+        hospitals = search_hospitals(
+            query=search_query if search_query else None,
+            zip_code=zip_code if zip_code else None,
+            limit=200,  # Get up to 200 results
+            use_fuzzy=True,  # Enable fuzzy matching
+            fuzzy_threshold=40  # Broad matching threshold
+        )
+
+        log.info(f"✅ Found {len(hospitals)} hospitals")
+
+        # Cache the results for pagination
+        search_key = _generate_search_key(search_query, zip_code)
+        cache_search_results(search_key, hospitals)
+
+        # Redirect to results page 1
+        return RedirectResponse(
+            url=f"/search-results/{patient_id}?page=1&search_key={search_key}"
+                f"&query={search_query}&zip={zip_code}",
+            status_code=303
+        )
+
+    except Exception as e:
+        log.exception(f"❌ Error during hospital search: {e}")
+        return templates.TemplateResponse(
+            "search_providers.html",
+            {
+                "request": request,
+                "patient": patient,
+                "error": "An error occurred during search. Please try again."
+            }
+        )
+
+
+@router.get("/search-results/{patient_id}", response_class=HTMLResponse)
+async def search_results_page(
+        patient_id: int,
+        request: Request,
+        db: AsyncSession = Depends(get_db),
+        page: int = Query(1, ge=1),
+        search_key: str = Query(...),
+        query: str = Query(""),
+        zip: str = Query("")
+) -> HTMLResponse:
+    """
+    Display paginated search results.
+
+    NEW in v3.0: Pagination support for up to 200 results.
+
+    Args:
+        patient_id: Patient ID
+        page: Current page number (1-indexed)
+        search_key: Cache key for retrieving results
+        query: Original search query (for display)
+        zip: Original ZIP code (for display)
+    """
+    # Verify patient exists
+    result = await db.execute(select(Patient).where(Patient.id == patient_id))
+    patient = result.scalars().first()
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    # Retrieve cached search results
+    hospitals = get_cached_search_results(search_key)
+
+    if hospitals is None:
+        # Cache expired or invalid key, redirect back to search
+        log.warning(f"Search cache miss for key: {search_key}")
+        return templates.TemplateResponse(
+            "search_providers.html",
+            {
+                "request": request,
+                "patient": patient,
+                "error": "Search results expired. Please search again."
+            }
+        )
+
+    # Format results for current page
+    per_page = 20
+    paginated = format_search_results_for_display(hospitals, page=page, per_page=per_page)
+
+    # Build pagination URLs
+    base_url = f"/search-results/{patient_id}?search_key={search_key}&query={query}&zip={zip}&page="
 
     return templates.TemplateResponse(
         "search_results.html",
         {
             "request": request,
             "patient": patient,
-            "hospitals": hospitals,
-            "search_query": search_query,
-            "city": city,
-            "state": state,
-            "zip_code": zip_code
+            "hospitals": paginated["results"],
+            "search_query": query,
+            "zip_code": zip,
+            # Pagination data
+            "page": paginated["page"],
+            "total_pages": paginated["total_pages"],
+            "total_results": paginated["total_results"],
+            "start_idx": paginated["start_idx"],
+            "end_idx": paginated["end_idx"],
+            "has_prev": paginated["has_prev"],
+            "has_next": paginated["has_next"],
+            "base_url": base_url
         }
     )
 
@@ -372,11 +496,14 @@ async def search_providers_submit(
 
 @router.get("/review-providers/{patient_id}", response_class=HTMLResponse)
 async def review_providers_page(
-        patient_id: int, request: Request, db: AsyncSession = Depends(get_db)
+        patient_id: int,
+        request: Request,
+        db: AsyncSession = Depends(get_db)
 ) -> HTMLResponse:
     """Page to review and edit selected providers before sending faxes."""
     res = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = res.scalars().first()
+
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
@@ -435,7 +562,7 @@ async def review_providers_submit(
         # Create provider record
         provider = Provider(
             name=name,
-            fax=fax,  # Store the medical records fax in the fax field
+            fax=fax,
             npi=pdata.get("npi"),
             address_line1=pdata.get("address"),
             city=pdata.get("city"),

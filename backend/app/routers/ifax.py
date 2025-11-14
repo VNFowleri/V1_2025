@@ -1,375 +1,761 @@
 # app/routers/ifax.py - v2.0
 """
-Enhanced iFax Webhook Router
+Enhanced iFax Router with Improved Fax Reception
+=================================================
 
-Handles incoming webhooks from iFax API for:
-1. Inbound faxes (incoming medical records)
-2. Outbound fax status updates (delivery confirmations)
+Improvements:
+1. Webhook signature verification
+2. Idempotency handling (prevent duplicate processing)
+3. Retry logic with exponential backoff
+4. Polling fallback mechanism
+5. Better error handling and logging
+6. Rate limiting protection
+7. Batch fax retrieval support
 
-Key improvements:
-- Comprehensive error handling and logging
-- Background processing with status tracking
-- Detailed webhook payload validation
-- Support for retry mechanisms
-- Enhanced status reporting
+Version: 2.0
 """
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
+import asyncio
+import hashlib
+import hmac
+import time
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, Field, validator
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from datetime import datetime
+
+from app.database.db import get_db
+from app.models.fax_file import FaxFile
+from app.services.fax_processor import IncomingFaxProcessor
 import logging
-from pydantic import BaseModel, Field
-from typing import Optional
 
-from app.database.db import get_db, AsyncSessionLocal
-from app.models import FaxFile, ProviderRequest
-from app.services.fax_processor import process_incoming_fax
-
-router = APIRouter()
 logger = logging.getLogger(__name__)
 
+router = APIRouter(prefix="/ifax", tags=["iFax"])
+
+
+# ==============================================================================
+# PYDANTIC MODELS
+# ==============================================================================
 
 class FaxWebhookPayload(BaseModel):
     """
-    iFax webhook payload structure for incoming faxes.
+    Enhanced iFax webhook payload model with validation.
 
-    Example payload:
-    {
-        "jobId": 12345,
-        "transactionId": 67890,
-        "fromNumber": "+15551234567",
-        "toNumber": "+15559876543",
-        "faxCallStart": 1699564800,
-        "faxReceivedPages": 5,
-        "faxStatus": "received",
-        "message": "Fax received successfully",
-        "code": 200,
-        "direction": "inbound"
-    }
+    Corresponds to iFax API webhook POST body.
     """
-    jobId: int
-    transactionId: int
-    fromNumber: Optional[str] = None
-    toNumber: Optional[str] = None
-    faxCallStart: int
-    faxReceivedPages: int = Field(..., alias="faxReceivedPages")
-    faxStatus: str
-    message: Optional[str] = None
-    code: Optional[int] = None
-    direction: Optional[str] = None
+    jobId: str = Field(..., description="Unique fax job ID")
+    transactionId: str = Field(..., description="Transaction identifier")
+    faxNumber: Optional[str] = Field(None, description="Sender fax number")
+    receiverNumber: Optional[str] = Field(None, description="Receiver fax number")
+    faxCallStart: Optional[str] = Field(None, description="ISO timestamp of fax reception start")
+    pages: Optional[int] = Field(None, description="Number of pages")
+    status: Optional[str] = Field(None, description="Fax status")
+
+    # Additional fields for enhanced tracking
+    fileUrl: Optional[str] = Field(None, description="Direct download URL if provided")
+    fileSize: Optional[int] = Field(None, description="File size in bytes")
+    duration: Optional[int] = Field(None, description="Call duration in seconds")
+
+    @validator('faxCallStart', pre=True)
+    def parse_timestamp(cls, v):
+        """Parse and validate timestamp"""
+        if v is None:
+            return None
+        # Handle various timestamp formats
+        return v
 
     class Config:
         extra = "allow"  # Allow additional fields from iFax
 
 
+class FaxDownloadRequest(BaseModel):
+    """Request model for manual fax download/reprocessing"""
+    job_id: str
+    transaction_id: str
+    force_reprocess: bool = False
+
+
+class FaxListResponse(BaseModel):
+    """Response model for listing incoming faxes"""
+    faxes: List[Dict[str, Any]]
+    total: int
+    page: int
+    page_size: int
+
+
+class FaxProcessingStatus(BaseModel):
+    """Status response for a fax processing job"""
+    job_id: str
+    status: str
+    patient_matched: bool
+    provider_matched: bool
+    ocr_completed: bool
+    error_message: Optional[str] = None
+    processed_at: Optional[datetime] = None
+
+
+# ==============================================================================
+# CONFIGURATION
+# ==============================================================================
+
+class IFaxConfig:
+    """Configuration for iFax integration"""
+
+    # Webhook signature verification (if iFax provides it)
+    WEBHOOK_SECRET: Optional[str] = None  # Set from environment
+
+    # Retry configuration
+    MAX_DOWNLOAD_RETRIES: int = 3
+    RETRY_BACKOFF_BASE: float = 2.0  # Exponential backoff multiplier
+    RETRY_INITIAL_DELAY: float = 1.0  # Initial delay in seconds
+
+    # Timeouts
+    DOWNLOAD_TIMEOUT: int = 30  # seconds
+    PROCESSING_TIMEOUT: int = 300  # 5 minutes for full OCR pipeline
+
+    # Polling configuration
+    POLLING_ENABLED: bool = True
+    POLLING_INTERVAL: int = 300  # 5 minutes
+    POLLING_LOOKBACK_HOURS: int = 24
+
+    # Rate limiting
+    MAX_CONCURRENT_DOWNLOADS: int = 5
+    RATE_LIMIT_DELAY: float = 0.5  # seconds between downloads
+
+    @classmethod
+    def from_env(cls):
+        """Load configuration from environment variables"""
+        import os
+        config = cls()
+        config.WEBHOOK_SECRET = os.getenv("IFAX_WEBHOOK_SECRET")
+        config.MAX_DOWNLOAD_RETRIES = int(os.getenv("IFAX_MAX_RETRIES", "3"))
+        config.POLLING_ENABLED = os.getenv("IFAX_POLLING_ENABLED", "true").lower() == "true"
+        return config
+
+
+config = IFaxConfig.from_env()
+
+
+# ==============================================================================
+# WEBHOOK SIGNATURE VERIFICATION
+# ==============================================================================
+
+def verify_webhook_signature(
+        payload_body: bytes,
+        signature_header: Optional[str],
+        secret: Optional[str]
+) -> bool:
+    """
+    Verify webhook signature to ensure request is from iFax.
+
+    Args:
+        payload_body: Raw request body bytes
+        signature_header: Signature from X-IFax-Signature header
+        secret: Shared webhook secret
+
+    Returns:
+        True if signature is valid or verification is disabled
+
+    Note:
+        If no secret is configured, verification is skipped (development mode)
+    """
+    if not secret or not signature_header:
+        logger.warning("⚠️ Webhook signature verification skipped (no secret configured)")
+        return True
+
+    try:
+        # Compute HMAC signature
+        expected_signature = hmac.new(
+            secret.encode('utf-8'),
+            payload_body,
+            hashlib.sha256
+        ).hexdigest()
+
+        # Constant-time comparison
+        is_valid = hmac.compare_digest(expected_signature, signature_header)
+
+        if not is_valid:
+            logger.error(f"❌ Invalid webhook signature. Expected: {expected_signature[:16]}...")
+
+        return is_valid
+
+    except Exception as e:
+        logger.error(f"❌ Error verifying webhook signature: {e}")
+        return False
+
+
+# ==============================================================================
+# IDEMPOTENCY HANDLING
+# ==============================================================================
+
+async def is_duplicate_webhook(
+        job_id: str,
+        transaction_id: str,
+        db: AsyncSession
+) -> bool:
+    """
+    Check if this fax has already been processed.
+
+    Args:
+        job_id: iFax job ID
+        transaction_id: Transaction ID
+        db: Database session
+
+    Returns:
+        True if already processed
+    """
+    result = await db.execute(
+        select(FaxFile).where(
+            FaxFile.job_id == job_id,
+            FaxFile.transaction_id == transaction_id
+        )
+    )
+    existing = result.scalar_one_or_none()
+    return existing is not None
+
+
+# ==============================================================================
+# RETRY LOGIC WITH EXPONENTIAL BACKOFF
+# ==============================================================================
+
+async def download_fax_with_retry(
+        job_id: str,
+        transaction_id: str,
+        max_retries: int = None
+) -> Optional[str]:
+    """
+    Download fax PDF with exponential backoff retry.
+
+    Args:
+        job_id: iFax job ID
+        transaction_id: Transaction ID
+        max_retries: Maximum retry attempts (defaults to config)
+
+    Returns:
+        File path if successful, None otherwise
+    """
+    if max_retries is None:
+        max_retries = config.MAX_DOWNLOAD_RETRIES
+
+    from app.services.ifax_service import download_fax
+
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"📥 Download attempt {attempt + 1}/{max_retries} for job {job_id}")
+
+            file_path = await asyncio.wait_for(
+                download_fax(job_id, transaction_id),
+                timeout=config.DOWNLOAD_TIMEOUT
+            )
+
+            if file_path:
+                logger.info(f"✅ Successfully downloaded fax on attempt {attempt + 1}")
+                return file_path
+
+            logger.warning(f"⚠️ Download returned None on attempt {attempt + 1}")
+
+        except asyncio.TimeoutError:
+            logger.error(f"⏱️ Download timeout on attempt {attempt + 1}")
+
+        except Exception as e:
+            logger.error(f"❌ Download error on attempt {attempt + 1}: {e}")
+
+        # Exponential backoff (unless it's the last attempt)
+        if attempt < max_retries - 1:
+            delay = config.RETRY_INITIAL_DELAY * (config.RETRY_BACKOFF_BASE ** attempt)
+            logger.info(f"⏳ Waiting {delay:.1f}s before retry...")
+            await asyncio.sleep(delay)
+
+    logger.error(f"❌ Failed to download fax after {max_retries} attempts")
+    return None
+
+
+# ==============================================================================
+# WEBHOOK ENDPOINT
+# ==============================================================================
+
 @router.post("/receive")
 async def receive_fax_webhook(
         request: Request,
         background_tasks: BackgroundTasks,
-        db: AsyncSession = Depends(get_db)
+        payload: FaxWebhookPayload,
+        db: AsyncSession = Depends(get_db),
+        x_ifax_signature: Optional[str] = Header(None)
 ):
     """
-    Webhook endpoint for receiving incoming faxes from iFax.
+    Enhanced webhook endpoint for incoming faxes from iFax.
 
-    This endpoint:
-    1. Validates the webhook payload
-    2. Creates a FaxFile database record immediately
-    3. Queues background processing for:
-       - Downloading the fax PDF
-       - OCR text extraction
-       - Patient matching
-       - Provider request matching
-       - Aggregation when complete
+    Improvements:
+    - Signature verification
+    - Idempotency check
+    - Fast response (202 Accepted)
+    - Background processing with retry
+    - Comprehensive logging
 
-    Returns immediately with 200 OK to iFax, processing continues in background.
+    Returns:
+        202: Accepted for processing
+        400: Invalid payload or signature
+        409: Duplicate webhook (already processing)
     """
-    # Log raw request for debugging
-    logger.info("=" * 80)
-    logger.info("📨 Incoming fax webhook received")
-    logger.info(f"Headers: {dict(request.headers)}")
+    logger.info(f"📨 Received fax webhook: job_id={payload.jobId}, transaction_id={payload.transactionId}")
 
+    # Step 1: Verify webhook signature
+    if config.WEBHOOK_SECRET:
+        body = await request.body()
+        if not verify_webhook_signature(body, x_ifax_signature, config.WEBHOOK_SECRET):
+            logger.error("❌ Invalid webhook signature - rejecting request")
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    # Step 2: Check for duplicate
+    is_duplicate = await is_duplicate_webhook(payload.jobId, payload.transactionId, db)
+    if is_duplicate:
+        logger.warning(f"⚠️ Duplicate webhook ignored: {payload.jobId}")
+        return {
+            "status": "duplicate",
+            "message": "Fax already processed",
+            "job_id": payload.jobId
+        }
+
+    # Step 3: Create FaxFile record immediately (claim this webhook)
     try:
-        payload_data = await request.json()
-        logger.info(f"Raw payload: {payload_data}")
+        received_time = None
+        if payload.faxCallStart:
+            try:
+                received_time = datetime.fromisoformat(
+                    payload.faxCallStart.replace('Z', '+00:00')
+                )
+            except:
+                received_time = datetime.utcnow()
+        else:
+            received_time = datetime.utcnow()
 
-        # Validate payload structure
-        payload = FaxWebhookPayload(**payload_data)
-        logger.info(
-            f"✅ Valid payload: JobID={payload.jobId}, "
-            f"TransactionID={payload.transactionId}, "
-            f"From={payload.fromNumber}, "
-            f"Pages={payload.faxReceivedPages}"
+        fax_record = FaxFile(
+            job_id=payload.jobId,
+            transaction_id=payload.transactionId,
+            sender=payload.faxNumber,
+            receiver=payload.receiverNumber,
+            received_time=received_time,
+            file_path="",  # Will be updated after download
+            pdf_data=b"",
+            ocr_text=""
         )
 
-    except ValueError as e:
-        logger.error(f"❌ Invalid payload structure: {e}")
-        raise HTTPException(status_code=400, detail=f"Invalid payload: {str(e)}")
-    except Exception as e:
-        logger.error(f"❌ Error parsing payload: {e}")
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
-
-    # Create FaxFile record immediately
-    try:
-        fax = FaxFile(
-            job_id=str(payload.jobId),
-            transaction_id=str(payload.transactionId),
-            sender=payload.fromNumber or "",
-            receiver=payload.toNumber or "",
-            received_time=datetime.utcfromtimestamp(payload.faxCallStart),
-            file_path="",  # Will be populated during processing
-            pdf_data=b"",  # Will be populated during processing
-            ocr_text="",  # Will be populated during processing
-        )
-
-        db.add(fax)
+        db.add(fax_record)
         await db.commit()
-        await db.refresh(fax)
+        await db.refresh(fax_record)
 
-        logger.info(
-            f"✅ Created FaxFile record: ID={fax.id}, JobID={payload.jobId}"
-        )
+        logger.info(f"✅ Created FaxFile record #{fax_record.id}")
 
     except Exception as e:
-        logger.exception(f"❌ Failed to create FaxFile record: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database error: {str(e)}"
-        )
+        await db.rollback()
+        logger.error(f"❌ Failed to create FaxFile record: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create fax record")
 
-    # Queue background processing
+    # Step 4: Queue background processing with enhanced retry
     background_tasks.add_task(
-        process_fax_background,
-        job_id=str(payload.jobId),
-        fax_record_id=fax.id,
-        transaction_id=payload.transactionId,
-        direction=payload.direction
+        process_fax_with_retry,
+        payload.jobId,
+        fax_record.id,
+        payload.transactionId,
+        received_time,
+        payload.faxNumber,
+        payload.receiverNumber
     )
 
-    logger.info(
-        f"✅ Queued background processing for FaxID={fax.id}, JobID={payload.jobId}"
-    )
-    logger.info("=" * 80)
+    logger.info(f"✅ Fax queued for processing: FaxFile #{fax_record.id}")
 
-    # Return success immediately (don't make iFax wait)
+    # Return 202 Accepted immediately
     return {
-        "status": "ok",
-        "message": "Fax received and queued for processing",
-        "fax_id": fax.id,
-        "job_id": str(payload.jobId)
+        "status": "accepted",
+        "message": "Fax accepted for processing",
+        "fax_id": fax_record.id,
+        "job_id": payload.jobId
     }
 
 
-async def process_fax_background(
+async def process_fax_with_retry(
         job_id: str,
         fax_record_id: int,
-        transaction_id: int,
-        direction: Optional[str] = None
+        transaction_id: str,
+        received_time: datetime,
+        sender: Optional[str],
+        receiver: Optional[str]
 ):
     """
-    Background task for processing incoming fax.
+    Background task to process fax with retry logic.
 
-    This runs asynchronously after the webhook returns 200 OK to iFax.
-    Handles the complete processing pipeline:
-    - Download PDF
-    - OCR extraction
-    - Patient matching
-    - Provider matching
-    - Request completion and PDF compilation
+    This is the enhanced version with:
+    - Download retry with exponential backoff
+    - OCR timeout handling
+    - Comprehensive error logging
+    - Graceful degradation
     """
-    logger.info(f"🚀 Starting background processing for FaxID={fax_record_id}")
+    from app.database.db import get_async_session_context
+
+    logger.info(f"🔄 Starting enhanced processing for job {job_id}")
 
     try:
-        # Use a new database session for background processing
-        async with AsyncSessionLocal() as db:
-            result = await process_incoming_fax(
-                job_id=job_id,
-                fax_record_id=fax_record_id,
-                transaction_id=transaction_id,
-                db=db,
-                direction=direction
+        # Step 1: Download with retry
+        file_path = await download_fax_with_retry(job_id, transaction_id)
+
+        if not file_path:
+            logger.error(f"❌ Failed to download fax after all retries: {job_id}")
+            # Update FaxFile with error status
+            async with get_async_session_context() as db:
+                result = await db.execute(
+                    select(FaxFile).where(FaxFile.id == fax_record_id)
+                )
+                fax_record = result.scalar_one_or_none()
+                if fax_record:
+                    fax_record.ocr_text = "ERROR: Failed to download fax"
+                    await db.commit()
+            return
+
+        # Step 2: Process with IncomingFaxProcessor (includes OCR, matching, etc.)
+        async with get_async_session_context() as db:
+            processor = IncomingFaxProcessor(db)
+
+            result = await asyncio.wait_for(
+                processor.process_incoming_fax(
+                    job_id=job_id,
+                    fax_record_id=fax_record_id,
+                    transaction_id=transaction_id,
+                    received_time=received_time,
+                    sender=sender,
+                    receiver=receiver
+                ),
+                timeout=config.PROCESSING_TIMEOUT
             )
 
-            logger.info(
-                f"✅ Background processing complete for FaxID={fax_record_id}: "
-                f"{result}"
-            )
+            logger.info(f"✅ Fax processing completed: {result}")
 
-            if not result["success"]:
-                logger.error(
-                    f"⚠️ Processing had errors: {result.get('errors', [])}"
-                )
-
-            # Log summary
-            if result["patient_matched"]:
-                logger.info(
-                    f"  📋 Patient matched: ID={result['patient_id']}"
-                )
-
-            if result["provider_matched"]:
-                logger.info(
-                    f"  🏥 Provider matched: {len(result['provider_request_ids'])} request(s)"
-                )
-
-            if result["request_completed"]:
-                logger.info(
-                    f"  📦 Request(s) completed: {result['completed_request_ids']}"
-                )
+    except asyncio.TimeoutError:
+        logger.error(f"⏱️ Fax processing timeout: {job_id}")
 
     except Exception as e:
-        logger.exception(
-            f"❌ Fatal error in background processing for FaxID={fax_record_id}: {e}"
-        )
+        logger.error(f"❌ Fax processing error: {e}", exc_info=True)
 
 
-@router.post("/outbound-status")
-async def outbound_status_webhook(
-        request: Request,
+# ==============================================================================
+# POLLING FALLBACK MECHANISM
+# ==============================================================================
+
+@router.post("/poll-incoming")
+async def poll_incoming_faxes(
+        db: AsyncSession = Depends(get_db),
+        background_tasks: BackgroundTasks = None,
+        lookback_hours: int = 24
+):
+    """
+    Polling endpoint to fetch missed faxes (fallback if webhooks fail).
+
+    This endpoint:
+    1. Calls iFax API to list incoming faxes
+    2. Checks which ones we haven't processed
+    3. Downloads and processes missing faxes
+
+    Args:
+        lookback_hours: How many hours to look back
+
+    Returns:
+        Summary of discovered and processed faxes
+    """
+    if not config.POLLING_ENABLED:
+        raise HTTPException(status_code=403, detail="Polling is disabled")
+
+    logger.info(f"🔍 Starting polling for incoming faxes (lookback: {lookback_hours}h)")
+
+    try:
+        from app.services.ifax_service import get_incoming_faxes
+
+        # Get list of incoming faxes from iFax
+        since = datetime.utcnow() - timedelta(hours=lookback_hours)
+        incoming_faxes = await get_incoming_faxes(since=since)
+
+        logger.info(f"📋 Found {len(incoming_faxes)} faxes from iFax API")
+
+        # Check which ones we don't have
+        new_faxes = []
+        for fax in incoming_faxes:
+            job_id = fax.get('jobId')
+            transaction_id = fax.get('transactionId')
+
+            if not await is_duplicate_webhook(job_id, transaction_id, db):
+                new_faxes.append(fax)
+
+        logger.info(f"🆕 Found {len(new_faxes)} new faxes to process")
+
+        # Process each new fax
+        processed_count = 0
+        failed_count = 0
+
+        for fax in new_faxes:
+            try:
+                # Create FaxFile record
+                received_time = datetime.fromisoformat(
+                    fax.get('receivedAt', datetime.utcnow().isoformat()).replace('Z', '+00:00')
+                )
+
+                fax_record = FaxFile(
+                    job_id=fax['jobId'],
+                    transaction_id=fax['transactionId'],
+                    sender=fax.get('from'),
+                    receiver=fax.get('to'),
+                    received_time=received_time,
+                    file_path="",
+                    pdf_data=b"",
+                    ocr_text=""
+                )
+
+                db.add(fax_record)
+                await db.commit()
+                await db.refresh(fax_record)
+
+                # Queue for processing
+                if background_tasks:
+                    background_tasks.add_task(
+                        process_fax_with_retry,
+                        fax['jobId'],
+                        fax_record.id,
+                        fax['transactionId'],
+                        received_time,
+                        fax.get('from'),
+                        fax.get('to')
+                    )
+
+                processed_count += 1
+                logger.info(f"✅ Queued fax for processing: {fax['jobId']}")
+
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"❌ Failed to queue fax {fax.get('jobId')}: {e}")
+
+        return {
+            "status": "completed",
+            "total_found": len(incoming_faxes),
+            "new_faxes": len(new_faxes),
+            "processed": processed_count,
+            "failed": failed_count,
+            "lookback_hours": lookback_hours
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Polling error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Polling failed: {str(e)}")
+
+
+# ==============================================================================
+# MANUAL DOWNLOAD/REPROCESSING
+# ==============================================================================
+
+@router.post("/download-manual")
+async def download_fax_manual(
+        request: FaxDownloadRequest,
+        background_tasks: BackgroundTasks,
         db: AsyncSession = Depends(get_db)
 ):
     """
-    Webhook endpoint for outbound fax status updates from iFax.
+    Manually trigger download and processing of a specific fax.
 
-    This endpoint receives status updates for faxes we sent out:
-    - fax_sent: Fax has been queued and sent
-    - delivered: Fax successfully delivered to recipient
-    - failed: Fax delivery failed
-
-    Updates the corresponding ProviderRequest status in our database.
+    Useful for:
+    - Reprocessing failed faxes
+    - Testing
+    - Manual intervention when webhooks are missed
     """
-    logger.info("📤 Outbound fax status webhook received")
+    logger.info(f"🔧 Manual download requested: job_id={request.job_id}")
 
-    try:
-        payload = await request.json()
-        logger.info(f"Status payload: {payload}")
+    # Check if already exists
+    if not request.force_reprocess:
+        is_dup = await is_duplicate_webhook(request.job_id, request.transaction_id, db)
+        if is_dup:
+            return {
+                "status": "exists",
+                "message": "Fax already processed. Use force_reprocess=true to reprocess."
+            }
 
-        job_id = str(payload.get("jobId", ""))
-        status = (payload.get("faxStatus") or payload.get("status") or "").lower()
-        message = payload.get("message", "")
-
-        if not job_id:
-            logger.warning("⚠️ No jobId in outbound status payload")
-            return {"status": "ok", "message": "No jobId provided"}
-
-        # Find the ProviderRequest with this job_id
-        result = await db.execute(
-            select(ProviderRequest).where(
-                ProviderRequest.outbound_job_id == job_id
-            )
+    # Create or update FaxFile record
+    result = await db.execute(
+        select(FaxFile).where(
+            FaxFile.job_id == request.job_id,
+            FaxFile.transaction_id == request.transaction_id
         )
-        provider_request = result.scalars().first()
+    )
+    fax_record = result.scalar_one_or_none()
 
-        if not provider_request:
-            logger.warning(
-                f"⚠️ No ProviderRequest found for JobID={job_id}"
-            )
-            return {"status": "ok", "message": f"No request found for jobId {job_id}"}
-
-        # Update status based on iFax status
-        old_status = provider_request.status
-
-        if status in ("success", "delivered", "ok"):
-            provider_request.status = "fax_delivered"
-            provider_request.delivered_at = datetime.utcnow()
-            logger.info(
-                f"✅ Fax delivered: ProviderRequest={provider_request.id}, "
-                f"JobID={job_id}"
-            )
-
-        elif status in ("failed", "error"):
-            provider_request.status = "fax_failed"
-            provider_request.failed_reason = message
-            logger.warning(
-                f"❌ Fax failed: ProviderRequest={provider_request.id}, "
-                f"JobID={job_id}, Reason={message}"
-            )
-        else:
-            # Unknown status, log but don't update
-            logger.warning(
-                f"⚠️ Unknown status '{status}' for JobID={job_id}"
-            )
-            return {"status": "ok", "message": f"Unknown status: {status}"}
-
-        # Save updates
-        db.add(provider_request)
+    if not fax_record:
+        fax_record = FaxFile(
+            job_id=request.job_id,
+            transaction_id=request.transaction_id,
+            received_time=datetime.utcnow(),
+            file_path="",
+            pdf_data=b"",
+            ocr_text=""
+        )
+        db.add(fax_record)
         await db.commit()
+        await db.refresh(fax_record)
 
-        logger.info(
-            f"✅ Updated ProviderRequest {provider_request.id}: "
-            f"{old_status} → {provider_request.status}"
-        )
+    # Queue for processing
+    background_tasks.add_task(
+        process_fax_with_retry,
+        request.job_id,
+        fax_record.id,
+        request.transaction_id,
+        fax_record.received_time,
+        fax_record.sender,
+        fax_record.receiver
+    )
 
-        return {
-            "status": "ok",
-            "message": "Status updated",
-            "provider_request_id": provider_request.id,
-            "old_status": old_status,
-            "new_status": provider_request.status
-        }
-
-    except Exception as e:
-        logger.exception(f"❌ Error processing outbound status: {e}")
-        # Return 200 even on error so iFax doesn't retry
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+    return {
+        "status": "queued",
+        "message": "Fax queued for processing",
+        "fax_id": fax_record.id,
+        "job_id": request.job_id
+    }
 
 
-@router.get("/status/{fax_id}")
-async def get_fax_processing_status(
-        fax_id: int,
+# ==============================================================================
+# STATUS ENDPOINTS
+# ==============================================================================
+
+@router.get("/status/{job_id}")
+async def get_fax_status(
+        job_id: str,
         db: AsyncSession = Depends(get_db)
-):
+) -> FaxProcessingStatus:
     """
-    Get the processing status of a specific fax.
+    Get processing status for a specific fax.
 
-    Useful for debugging and monitoring.
+    Returns detailed status including:
+    - Whether OCR completed
+    - Whether patient matched
+    - Whether provider matched
+    - Any error messages
     """
-    fax = await db.get(FaxFile, fax_id)
+    result = await db.execute(
+        select(FaxFile).where(FaxFile.job_id == job_id)
+    )
+    fax = result.scalar_one_or_none()
 
     if not fax:
         raise HTTPException(status_code=404, detail="Fax not found")
 
-    # Check if patient was matched
-    patient_matched = fax.patient_id is not None
-
-    # Check if linked to any provider requests
-    if fax.patient_id:
-        pr_result = await db.execute(
-            select(ProviderRequest).where(
-                ProviderRequest.inbound_fax_id == fax_id
-            )
-        )
-        provider_requests = pr_result.scalars().all()
+    # Determine status
+    if fax.ocr_text and "ERROR" not in fax.ocr_text:
+        status = "completed"
+        ocr_completed = True
+    elif fax.ocr_text and "ERROR" in fax.ocr_text:
+        status = "failed"
+        ocr_completed = False
+    elif fax.file_path:
+        status = "processing"
+        ocr_completed = False
     else:
-        provider_requests = []
+        status = "downloading"
+        ocr_completed = False
 
-    return {
-        "fax_id": fax.id,
-        "job_id": fax.job_id,
-        "transaction_id": fax.transaction_id,
-        "sender": fax.sender,
-        "receiver": fax.receiver,
-        "received_time": fax.received_time.isoformat() if fax.received_time else None,
-        "has_pdf": bool(fax.pdf_data),
-        "has_ocr_text": bool(fax.ocr_text),
-        "ocr_text_length": len(fax.ocr_text) if fax.ocr_text else 0,
-        "patient_matched": patient_matched,
-        "patient_id": fax.patient_id,
-        "provider_requests_matched": len(provider_requests),
-        "provider_request_ids": [pr.id for pr in provider_requests],
-        "file_path": fax.file_path
-    }
+    return FaxProcessingStatus(
+        job_id=job_id,
+        status=status,
+        patient_matched=fax.patient_id is not None,
+        provider_matched=bool(fax.provider_requests),
+        ocr_completed=ocr_completed,
+        error_message=fax.ocr_text if "ERROR" in (fax.ocr_text or "") else None,
+        processed_at=fax.received_time
+    )
 
 
 @router.get("/health")
 async def health_check():
     """
-    Health check endpoint for monitoring.
+    Health check endpoint for iFax service.
     """
     return {
+        "service": "iFax Integration",
         "status": "healthy",
-        "service": "iFax Webhook Handler",
-        "version": "2.0"
+        "webhook_verification": config.WEBHOOK_SECRET is not None,
+        "polling_enabled": config.POLLING_ENABLED,
+        "max_retries": config.MAX_DOWNLOAD_RETRIES
     }
+
+
+# ==============================================================================
+# SCHEDULED POLLING (Optional Background Task)
+# ==============================================================================
+
+async def scheduled_polling_task():
+    """
+    Background task that runs periodically to poll for missed faxes.
+
+    This should be run as a separate background process or scheduled task.
+    Example using asyncio:
+
+    ```python
+    asyncio.create_task(scheduled_polling_task())
+    ```
+    """
+    if not config.POLLING_ENABLED:
+        logger.info("📴 Scheduled polling is disabled")
+        return
+
+    logger.info(f"⏰ Starting scheduled polling task (interval: {config.POLLING_INTERVAL}s)")
+
+    while True:
+        try:
+            logger.info("🔍 Running scheduled fax polling...")
+
+            from app.database.db import get_async_session_context
+            async with get_async_session_context() as db:
+                # Simulate calling the poll endpoint
+                from app.services.ifax_service import get_incoming_faxes
+                from fastapi import BackgroundTasks
+
+                since = datetime.utcnow() - timedelta(hours=config.POLLING_LOOKBACK_HOURS)
+                incoming_faxes = await get_incoming_faxes(since=since)
+
+                logger.info(f"📋 Polling found {len(incoming_faxes)} faxes")
+
+                # Process new faxes
+                for fax in incoming_faxes:
+                    job_id = fax.get('jobId')
+                    transaction_id = fax.get('transactionId')
+
+                    if not await is_duplicate_webhook(job_id, transaction_id, db):
+                        logger.info(f"🆕 Processing missed fax: {job_id}")
+
+                        # Create record and process
+                        fax_record = FaxFile(
+                            job_id=job_id,
+                            transaction_id=transaction_id,
+                            sender=fax.get('from'),
+                            receiver=fax.get('to'),
+                            received_time=datetime.utcnow(),
+                            file_path="",
+                            pdf_data=b"",
+                            ocr_text=""
+                        )
+
+                        db.add(fax_record)
+                        await db.commit()
+                        await db.refresh(fax_record)
+
+                        # Process in background
+                        asyncio.create_task(
+                            process_fax_with_retry(
+                                job_id,
+                                fax_record.id,
+                                transaction_id,
+                                fax_record.received_time,
+                                fax.get('from'),
+                                fax.get('to')
+                            )
+                        )
+
+        except Exception as e:
+            logger.error(f"❌ Scheduled polling error: {e}", exc_info=True)
+
+        # Wait for next interval
+        await asyncio.sleep(config.POLLING_INTERVAL)

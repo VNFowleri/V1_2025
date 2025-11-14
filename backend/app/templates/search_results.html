@@ -1,182 +1,224 @@
-{% extends "base.html" %}
-{% block content %}
-<section>
-  <h2>Search Results</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Results - Veritas One</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+<section class="container">
+  <h1>Search Results</h1>
 
-  {% if search_query %}
-    <p>Results for: <strong>{{ search_query }}</strong></p>
-  {% endif %}
-  {% if city or state or zip_code %}
-    <p>Location: <strong>
-      {% if city %}{{ city }}{% endif %}
-      {% if city and state %}, {% endif %}
-      {% if state %}{{ state }}{% endif %}
-      {% if zip_code %} {{ zip_code }}{% endif %}
-    </strong></p>
-  {% endif %}
+  <div class="search-info">
+    {% if search_query %}
+    <p><strong>Search query:</strong> {{ search_query }}</p>
+    {% endif %}
+    {% if city %}
+    <p><strong>Location:</strong> {{ city }}{% if state %}, {{ state }}{% endif %}{% if zip_code %} {{ zip_code }}{% endif %}</p>
+    {% endif %}
+    <p><strong>Results:</strong> {{ hospitals|length }} provider(s) found</p>
+  </div>
 
   {% if hospitals %}
-    <p class="results-count">Found {{ hospitals|length }} provider(s)</p>
-
-    <div class="search-info">
-      <p><strong>💡 About fax numbers:</strong> We automatically search for verified medical records department fax numbers.
-      Providers with verified fax numbers are marked with a ✅.</p>
+    <div class="search-actions">
+      <button type="button" onclick="selectAll()" class="btn btn-secondary">Select All</button>
+      <button type="button" onclick="selectVerified()" class="btn btn-secondary">Select Verified Only</button>
+      <button type="button" onclick="deselectAll()" class="btn btn-secondary">Deselect All</button>
     </div>
 
-    <form id="selectForm" action="/review-providers/{{ patient.id }}" method="get">
-      <div class="results-list">
-        {% for hospital in hospitals %}
-        <div class="result-card {% if hospital.fax_verified %}verified{% endif %}">
-          <input type="checkbox" id="hospital_{{ loop.index }}"
-                 data-provider="{{ hospital|tojson|e }}"
-                 class="provider-checkbox">
-          <label for="hospital_{{ loop.index }}" class="result-label">
-            <div class="result-header">
-              <h3>{{ hospital.name }}</h3>
-              <div class="badges">
-                {% if hospital.fax_verified %}
-                  <span class="verified-badge" title="Fax number verified from medical records department">
-                    ✅ Verified
-                  </span>
+    <div id="resultsContainer">
+      {% for hospital in hospitals %}
+      <div class="result-card {% if hospital.fax_verified %}verified{% endif %}" id="card_{{ loop.index0 }}">
+        <input
+          type="checkbox"
+          class="provider-checkbox"
+          id="hospital_{{ loop.index0 }}"
+          data-provider='{{ hospital | tojson }}'
+          onchange="updateSelectionCount()"
+        >
+        <label for="hospital_{{ loop.index0 }}" class="result-label">
+          <div class="result-header">
+            <h3>{{ hospital.name }}</h3>
+            <div class="badges">
+              {% if hospital.source %}
+              <span class="source-badge">{{ hospital.source }}</span>
+              {% endif %}
+              {% if hospital.fax_verified %}
+              <span class="verified-badge">✓ HAS FAX</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="result-details">
+            {% if hospital.address %}
+            <p><strong>Address:</strong> {{ hospital.address }}</p>
+            {% endif %}
+
+            {% if hospital.phone %}
+            <p><strong>Phone:</strong> {{ hospital.phone }}</p>
+            {% endif %}
+
+            {% if hospital.npi %}
+            <p><strong>NPI:</strong> {{ hospital.npi }}</p>
+            {% endif %}
+
+            {% if hospital.fax or hospital.medical_records_fax %}
+            <div class="fax-info">
+              <p class="fax-number">
+                <strong>Fax:</strong> {{ hospital.medical_records_fax or hospital.fax }}
+              </p>
+              {% if hospital.fax_confidence %}
+              <p class="fax-source">
+                Confidence: {{ (hospital.fax_confidence * 100) | round | int }}%
+                {% if hospital.fax_verification_source %}
+                (Source: {{ hospital.fax_verification_source }})
                 {% endif %}
-                <span class="source-badge">{{ hospital.source }}</span>
-              </div>
-            </div>
-
-            <div class="result-details">
-              {% if hospital.address %}
-                <p><strong>📍 Address:</strong> {{ hospital.address }}</p>
-              {% endif %}
-
-              {% if hospital.phone %}
-                <p><strong>☎️ Phone:</strong> {{ hospital.phone }}</p>
-              {% endif %}
-
-              {% if hospital.medical_records_fax or hospital.fax %}
-                <div class="fax-info">
-                  <p class="fax-number">
-                    <strong>📠 Medical Records Fax:</strong>
-                    {{ hospital.medical_records_fax or hospital.fax }}
-
-                    {% if hospital.fax_verified %}
-                      <span class="confidence-high" title="High confidence - verified from official source">
-                        ({{ (hospital.fax_confidence * 100)|int }}% confidence)
-                      </span>
-                    {% elif hospital.fax_confidence and hospital.fax_confidence >= 0.7 %}
-                      <span class="confidence-medium" title="Medium confidence - found online">
-                        ({{ (hospital.fax_confidence * 100)|int }}% confidence)
-                      </span>
-                    {% elif hospital.fax %}
-                      <span class="confidence-low" title="Unverified - from directory listing">
-                        (Unverified)
-                      </span>
-                    {% endif %}
-                  </p>
-
-                  {% if hospital.fax_verification_source %}
-                    <p class="fax-source">
-                      <em>Source: {{ hospital.fax_verification_source }}</em>
-                      {% if hospital.verification_url %}
-                        <a href="{{ hospital.verification_url }}" target="_blank" class="verify-link">
-                          🔗 Verify
-                        </a>
-                      {% endif %}
-                    </p>
-                  {% endif %}
-                </div>
-              {% else %}
-                <div class="no-fax-warning">
-                  <p class="no-fax">⚠️ No fax number available</p>
-                  <p class="help-text small">
-                    We'll try to find it automatically, or you can:
-                    <br>• Call the hospital and ask for the medical records department fax
-                    <br>• Add it manually on the next page
-                  </p>
-                </div>
-              {% endif %}
-
-              {% if hospital.note %}
-                <p class="note"><em>ℹ️ {{ hospital.note }}</em></p>
+              </p>
               {% endif %}
             </div>
-          </label>
-        </div>
-        {% endfor %}
+            {% else %}
+            <div class="fax-warning">
+              <p><strong>⚠️ No fax number available</strong></p>
+              <p class="fax-note">You can add it manually on the next screen</p>
+            </div>
+            {% endif %}
+          </div>
+        </label>
       </div>
+      {% endfor %}
+    </div>
 
-      <div class="form-actions">
-        <button type="button" onclick="selectAll()" class="btn btn-secondary">Select All</button>
-        <button type="button" onclick="selectVerified()" class="btn btn-secondary">Select Verified Only</button>
-        <button type="button" onclick="deselectAll()" class="btn btn-secondary">Deselect All</button>
-        <button type="button" onclick="continueToReview()" class="btn btn-primary">Continue to Review</button>
-      </div>
-    </form>
+    <div class="selection-summary">
+      <p><strong>Selected Providers: <span id="selectedCount">0</span></strong></p>
+    </div>
+
+    <div class="form-actions">
+      <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary">New Search</a>
+      <button
+        type="button"
+        onclick="continueToReview()"
+        class="btn btn-primary"
+        id="continueBtn"
+        disabled
+      >
+        CONTINUE TO REVIEW →
+      </button>
+    </div>
+
   {% else %}
     <div class="no-results">
-      <h3>No providers found</h3>
-      <p>We couldn't find any providers matching your search criteria.</p>
+      <p>No providers found matching your search.</p>
+      <p><strong>Try:</strong></p>
+      <ul>
+        <li>Searching with different terms</li>
+        <li>Using a broader location (city or state only)</li>
+        <li><a href="/review-providers/{{ patient.id }}">Adding providers manually</a></li>
+      </ul>
+    </div>
 
-      <div class="help-section">
-        <h4>💡 Search Tips:</h4>
-        <ul>
-          <li><strong>Check spelling:</strong> Try common variations (e.g., "Mass General" vs "Massachusetts General")</li>
-          <li><strong>Broaden your search:</strong> Try searching by city/state only</li>
-          <li><strong>Use partial names:</strong> Just enter "Presbyterian" instead of full name</li>
-          <li><strong>Known the fax?</strong> <a href="/review-providers/{{ patient.id }}">Add provider manually</a></li>
-        </ul>
-      </div>
-
-      <div class="search-examples">
-        <h4>Example searches:</h4>
-        <ul>
-          <li>"Mayo Clinic" (by name)</li>
-          <li>City: "Boston", State: "MA" (all Boston hospitals)</li>
-          <li>ZIP: "02115" (hospitals in that ZIP)</li>
-        </ul>
-      </div>
+    <div class="form-actions">
+      <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary">New Search</a>
+      <a href="/review-providers/{{ patient.id }}" class="btn btn-primary">Add Manually</a>
     </div>
   {% endif %}
-
-  <div class="form-actions">
-    <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary">🔍 New Search</a>
-    <a href="/review-providers/{{ patient.id }}" class="btn btn-secondary">➕ Add Manually</a>
-  </div>
 </section>
 
 <script>
+// Track selected providers globally
 let selectedProviders = [];
 
-function selectAll() {
-  document.querySelectorAll('.provider-checkbox').forEach(cb => cb.checked = true);
+// Update selection count and button state
+function updateSelectionCount() {
+  const checkboxes = document.querySelectorAll('.provider-checkbox:checked');
+  const count = checkboxes.length;
+  const countElement = document.getElementById('selectedCount');
+  const continueBtn = document.getElementById('continueBtn');
+
+  if (countElement) {
+    countElement.textContent = count;
+  }
+
+  if (continueBtn) {
+    continueBtn.disabled = count === 0;
+  }
+
+  console.log(`Selection updated: ${count} provider(s) selected`);
 }
 
+// Select all checkboxes
+function selectAll() {
+  document.querySelectorAll('.provider-checkbox').forEach(cb => {
+    cb.checked = true;
+  });
+  updateSelectionCount();
+}
+
+// Select only verified providers
 function selectVerified() {
   document.querySelectorAll('.provider-checkbox').forEach(cb => {
     const card = cb.closest('.result-card');
     cb.checked = card && card.classList.contains('verified');
   });
+  updateSelectionCount();
 }
 
+// Deselect all checkboxes
 function deselectAll() {
-  document.querySelectorAll('.provider-checkbox').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.provider-checkbox').forEach(cb => {
+    cb.checked = false;
+  });
+  updateSelectionCount();
 }
 
+// Continue to review page
 function continueToReview() {
   selectedProviders = [];
+
+  // Collect all checked providers
   document.querySelectorAll('.provider-checkbox:checked').forEach(cb => {
-    const providerData = JSON.parse(cb.getAttribute('data-provider'));
-    selectedProviders.push(providerData);
+    try {
+      const providerData = JSON.parse(cb.getAttribute('data-provider'));
+      selectedProviders.push(providerData);
+    } catch (e) {
+      console.error('Error parsing provider data:', e);
+    }
   });
 
+  console.log(`Selected ${selectedProviders.length} provider(s)`);
+
   if (selectedProviders.length === 0) {
-    alert('Please select at least one provider');
+    alert('Please select at least one provider to continue');
     return;
   }
 
-  // Store in sessionStorage and redirect
-  sessionStorage.setItem('selectedProviders', JSON.stringify(selectedProviders));
-  window.location.href = '/review-providers/{{ patient.id }}';
+  // Store in sessionStorage
+  try {
+    sessionStorage.setItem('selectedProviders', JSON.stringify(selectedProviders));
+    console.log('Providers saved to sessionStorage');
+  } catch (e) {
+    console.error('Error saving to sessionStorage:', e);
+    alert('Error saving selection. Please try again.');
+    return;
+  }
+
+  // Redirect to review page
+  const patientId = '{{ patient.id }}';
+  const reviewUrl = `/review-providers/${patientId}`;
+  console.log(`Redirecting to: ${reviewUrl}`);
+
+  window.location.href = reviewUrl;
 }
+
+// Initialize on page load
+window.addEventListener('DOMContentLoaded', function() {
+  console.log('Search results page loaded');
+  const checkboxes = document.querySelectorAll('.provider-checkbox');
+  console.log(`Found ${checkboxes.length} provider checkboxes`);
+
+  // Initialize count
+  updateSelectionCount();
+});
 </script>
 
 <style>
@@ -186,6 +228,17 @@ function continueToReview() {
   padding: 1rem;
   margin: 1rem 0;
   border-radius: 4px;
+}
+
+.search-info p {
+  margin: 0.25rem 0;
+}
+
+.search-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
 }
 
 .result-card {
@@ -210,6 +263,14 @@ function continueToReview() {
   box-shadow: 0 2px 8px rgba(0,123,255,0.2);
 }
 
+.provider-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
 .result-label {
   flex: 1;
   cursor: pointer;
@@ -220,6 +281,7 @@ function continueToReview() {
   justify-content: space-between;
   align-items: start;
   margin-bottom: 0.5rem;
+  gap: 1rem;
 }
 
 .result-header h3 {
@@ -241,6 +303,7 @@ function continueToReview() {
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .verified-badge {
@@ -250,6 +313,7 @@ function continueToReview() {
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .result-details p {
@@ -268,43 +332,16 @@ function continueToReview() {
   color: #28a745;
   font-weight: bold;
   font-family: monospace;
+  margin: 0;
 }
 
 .fax-source {
   font-size: 0.85rem;
   color: #666;
-  margin-top: 0.25rem;
+  margin: 0.25rem 0 0 0;
 }
 
-.verify-link {
-  color: #007bff;
-  text-decoration: none;
-  margin-left: 0.5rem;
-}
-
-.verify-link:hover {
-  text-decoration: underline;
-}
-
-.confidence-high {
-  color: #28a745;
-  font-size: 0.85rem;
-  font-weight: normal;
-}
-
-.confidence-medium {
-  color: #ffc107;
-  font-size: 0.85rem;
-  font-weight: normal;
-}
-
-.confidence-low {
-  color: #6c757d;
-  font-size: 0.85rem;
-  font-weight: normal;
-}
-
-.no-fax-warning {
+.fax-warning {
   background: #fff3cd;
   border-left: 3px solid #ffc107;
   padding: 0.75rem;
@@ -312,68 +349,113 @@ function continueToReview() {
   margin: 0.5rem 0;
 }
 
-.no-fax {
+.fax-warning p {
+  margin: 0.25rem 0;
   color: #856404;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
 }
 
-.help-text {
-  color: #666;
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-.note {
-  color: #6c757d;
+.fax-note {
   font-size: 0.85rem;
   font-style: italic;
-  margin-top: 0.5rem;
 }
 
-.form-actions {
-  margin-top: 2rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
+.selection-summary {
+  background: #f8f9fa;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.selection-summary p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+#selectedCount {
+  color: #007bff;
+  font-size: 1.3rem;
 }
 
 .no-results {
-  text-align: center;
-  padding: 2rem;
   background: #f8f9fa;
+  border: 1px solid #ddd;
   border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
   margin: 2rem 0;
 }
 
-.no-results h3 {
-  margin-top: 0;
-  color: #6c757d;
-}
-
-.help-section, .search-examples {
+.no-results ul {
   text-align: left;
-  max-width: 600px;
-  margin: 2rem auto;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: inline-block;
+  margin-top: 1rem;
 }
 
-.help-section h4, .search-examples h4 {
-  margin-top: 0;
-  color: #007bff;
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
 }
 
-.help-section ul, .search-examples ul {
-  text-align: left;
-  padding-left: 1.5rem;
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: all 0.2s;
 }
 
-.help-section li, .search-examples li {
-  margin: 0.5rem 0;
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+}
+
+@media (max-width: 768px) {
+  .result-card {
+    flex-direction: column;
+  }
+
+  .search-actions {
+    flex-direction: column;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
 }
 </style>
-{% endblock %}
+</body>
+</html>

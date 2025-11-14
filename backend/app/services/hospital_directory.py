@@ -1,101 +1,203 @@
-# app/services/hospital_directory.py - v3.0 - SIMPLIFIED FROM SCRATCH
+# app/services/hospital_directory.py - v4.3 - FIXED: Don't fuzzy match wildcard searches
 """
-Hospital/Facility Search - Simplified Version
+Hospital/Facility Search - Fixed Fuzzy Matching Logic
 
-FOCUS: Only search for organizations (hospitals, clinics, medical centers)
-EXCLUDE: Individual doctors/practitioners
-
-Key Features:
-- Searches NPPES for organizations only (NPI-2)
-- Simple, straightforward logic
-- Comprehensive logging
-- No complex filtering or fuzzy matching initially
+FIXED IN v4.3:
+- Don't apply fuzzy matching when using wildcard searches (they're already broad!)
+- Wildcard searches trust NPPES API results
+- Only fuzzy match for specific, longer queries
+- Much better results for short queries like "Mayo", "Cleveland", etc.
 """
 
 import requests
 import logging
-from typing import List, Dict, Optional
 import re
+from typing import List, Dict, Optional
+from rapidfuzz import fuzz, process
 
 logger = logging.getLogger(__name__)
 
 # NPPES API endpoint
 NPPES_API = "https://npiregistry.cms.hhs.gov/api/"
 
+# Hospital-related keywords for filtering
+HOSPITAL_KEYWORDS = [
+    'hospital', 'medical center', 'health system', 'healthcare',
+    'clinic', 'medical group', 'health center', 'regional medical',
+    'community hospital', 'general hospital', 'memorial', 'medicine',
+    'university hospital', 'children\'s hospital', 'veterans',
+    'surgery center', 'urgent care', 'emergency', 'trauma center',
+    'medical', 'physicians', 'associates', 'care', 'health'
+]
+
+
+def validate_fax_number(fax: str) -> bool:
+    """Validate that a fax number is properly formatted."""
+    if not fax:
+        return False
+    digits = re.sub(r'\D', '', fax)
+    return len(digits) == 10 or len(digits) == 11
+
+
+def format_fax_number(fax: str) -> str:
+    """Format a fax number to E.164 format (+1XXXXXXXXXX)."""
+    if not fax:
+        return ""
+    digits = re.sub(r'\D', '', fax)
+    if len(digits) == 10:
+        return f"+1{digits}"
+    if len(digits) == 11 and digits.startswith('1'):
+        return f"+{digits}"
+    if fax.startswith('+'):
+        return fax
+    return f"+1{digits}"
+
+
+def _is_hospital_like(name: str) -> bool:
+    """Check if organization name suggests it's a hospital or medical facility."""
+    if not name:
+        return False
+    name_lower = name.lower()
+    return any(keyword in name_lower for keyword in HOSPITAL_KEYWORDS)
+
+
+def _fuzzy_match_hospitals(query: str, candidates: List[Dict], threshold: int = 40) -> List[Dict]:
+    """
+    Perform fuzzy matching on hospital names.
+
+    Uses token_sort_ratio for flexible matching that handles:
+    - Misspellings
+    - Partial names
+    - Word order differences
+    """
+    if not query or not candidates:
+        return candidates
+
+    logger.info(f"🔍 Applying fuzzy matching with query: '{query}' (threshold: {threshold})")
+
+    # Extract names for matching
+    names = [c['name'] for c in candidates]
+
+    # Use process.extract to get all matches above threshold
+    matches = process.extract(
+        query,
+        names,
+        scorer=fuzz.token_sort_ratio,
+        score_cutoff=threshold,
+        limit=None
+    )
+
+    # Create a mapping of names to scores
+    score_map = {match[0]: match[1] for match in matches}
+
+    # Filter and sort candidates by score
+    matched_candidates = []
+    for candidate in candidates:
+        if candidate['name'] in score_map:
+            candidate['fuzzy_score'] = score_map[candidate['name']]
+            matched_candidates.append(candidate)
+
+    matched_candidates.sort(key=lambda x: x.get('fuzzy_score', 0), reverse=True)
+
+    logger.info(f"✅ Fuzzy matching kept {len(matched_candidates)} of {len(candidates)} results")
+
+    return matched_candidates
+
 
 def search_hospitals(
         query: Optional[str] = None,
-        city: Optional[str] = None,
-        state: Optional[str] = None,
         zip_code: Optional[str] = None,
-        limit: int = 50
+        limit: int = 200,
+        use_fuzzy: bool = True,
+        fuzzy_threshold: int = 10
 ) -> List[Dict]:
     """
-    Search for hospitals and medical facilities (organizations only).
+    Search for hospitals and medical facilities using NPPES API.
 
-    This function focuses on returning healthcare FACILITIES, not individual doctors.
+    FIXED v4.3: Don't apply fuzzy matching to wildcard searches
+    - Wildcard searches ("Mayo*") already cast a broad net
+    - Only fuzzy match longer, specific queries
+    - Much better results for short queries
 
     Args:
         query: Hospital/facility name to search for
-        city: City name
-        state: State code (e.g., 'MA', 'CA')
-        zip_code: ZIP/postal code
-        limit: Maximum number of results (default 50)
+        zip_code: ZIP/postal code for location filtering
+        limit: Maximum number of results (default 200, API max 1200)
+        use_fuzzy: Whether to apply fuzzy matching (default True)
+        fuzzy_threshold: Minimum fuzzy match score 0-100 (default 40)
 
     Returns:
         List of facility dictionaries with name, address, phone, fax, etc.
     """
     logger.info("=" * 80)
-    logger.info(f"🏥 HOSPITAL SEARCH STARTED")
+    logger.info("🏥 HOSPITAL SEARCH STARTED")
     logger.info(f"   Query: '{query}'")
-    logger.info(f"   City: '{city}'")
-    logger.info(f"   State: '{state}'")
-    logger.info(f"   ZIP: '{zip_code}'")
+    logger.info(f"   ZIP Code: '{zip_code}'")
     logger.info(f"   Limit: {limit}")
+    logger.info(f"   Fuzzy Matching: {use_fuzzy} (threshold: {fuzzy_threshold})")
     logger.info("=" * 80)
+
+    # Validate inputs
+    if not query and not zip_code:
+        logger.warning("❌ No search criteria provided")
+        return []
 
     # Build NPPES API parameters
     params = {
         "version": "2.1",
-        "limit": limit,
-        "enumeration_type": "NPI-2"  # CRITICAL: Only organizations, not individuals
+        "limit": min(limit, 1200),
     }
 
-    # Add search criteria
+    # Track if we used wildcard
+    used_wildcard = False
+
+    # Organization name search with wildcard
     if query:
-        params["organization_name"] = query
-        logger.info(f"📝 Searching by organization name: '{query}'")
+        clean_query = query.strip()
 
-    if city:
-        params["city"] = city
-        logger.info(f"📍 Filtering by city: '{city}'")
+        # NPPES supports trailing wildcards with 2+ characters
+        # Use wildcard for short, single-word queries
+        if len(clean_query.split()) == 1 and len(clean_query) >= 2 and not clean_query.endswith('*'):
+            search_term = f"{clean_query}*"
+            used_wildcard = True
+            logger.info(f"🎯 Using wildcard search: '{search_term}'")
+        else:
+            search_term = clean_query
+            logger.info(f"🎯 Searching for: '{search_term}'")
 
-    if state:
-        params["state"] = state
-        logger.info(f"📍 Filtering by state: '{state}'")
+        params["organization_name"] = search_term
 
+    # ZIP code filtering
     if zip_code:
-        params["postal_code"] = zip_code
-        logger.info(f"📍 Filtering by ZIP: '{zip_code}'")
+        clean_zip = re.sub(r'\D', '', zip_code)
+        if clean_zip:
+            params["postal_code"] = clean_zip[:5]
+            logger.info(f"📍 Filtering by ZIP: '{params['postal_code']}'")
+            if not query:
+                params["enumeration_type"] = "NPI-2"
 
     # Make NPPES API request
     try:
-        logger.info(f"🌐 Making NPPES API request...")
+        logger.info("📡 Making NPPES API request...")
         logger.info(f"   URL: {NPPES_API}")
-        logger.info(f"   Params: {params}")
+        logger.info(f"   Full params: {params}")
 
         response = requests.get(NPPES_API, params=params, timeout=30)
         response.raise_for_status()
-
         data = response.json()
-        result_count = data.get("result_count", 0)
 
+        result_count = data.get("result_count", 0)
         logger.info(f"✅ NPPES API SUCCESS")
-        logger.info(f"   Status: {response.status_code}")
-        logger.info(f"   Total results: {result_count}")
+        logger.info(f"   HTTP Status: {response.status_code}")
+        logger.info(f"   Results from API: {result_count}")
+
+        if result_count == 0:
+            logger.warning("⚠️  NPPES returned 0 results")
+            logger.warning(f"   Try: Simplifying query or searching by ZIP")
+            return []
 
     except requests.exceptions.Timeout:
-        logger.error(f"❌ NPPES API TIMEOUT after 30 seconds")
+        logger.error("❌ NPPES API TIMEOUT after 30 seconds")
         return []
     except requests.exceptions.ConnectionError as e:
         logger.error(f"❌ NPPES API CONNECTION ERROR: {e}")
@@ -109,166 +211,156 @@ def search_hospitals(
         return []
 
     # Parse results
-    results = data.get("results", [])
+    results_raw = data.get("results", [])
+    logger.info(f"📦 Processing {len(results_raw)} raw results...")
 
-    if not results:
-        logger.warning(f"⚠️ No results returned from NPPES API")
-        return []
+    hospitals = []
+    filtered_by_type = 0
+    filtered_by_keyword = 0
+    no_address = 0
 
-    logger.info(f"📊 Processing {len(results)} results from NPPES...")
-
-    facilities = []
-    for idx, result in enumerate(results, 1):
+    for result in results_raw:
         try:
-            facility = _parse_nppes_result(result, idx)
-            if facility:
-                facilities.append(facility)
-                logger.debug(f"   ✓ Parsed facility {idx}: {facility['name']}")
+            enum_type = result.get("enumeration_type", "")
+
+            # Get organization name
+            basic = result.get("basic", {})
+            name = basic.get("organization_name", "").strip()
+
+            # For NPI-1 (individuals), try to get name
+            if not name and enum_type == "NPI-1":
+                first = basic.get("first_name", "")
+                last = basic.get("last_name", "")
+                if first and last:
+                    name = f"{first} {last}"
+
+            if not name:
+                continue
+
+            # Filter by enumeration type for name searches
+            if query and enum_type == "NPI-1":
+                if not _is_hospital_like(name):
+                    filtered_by_type += 1
+                    continue
+
+            # Filter by medical keywords
+            if query and not _is_hospital_like(name):
+                logger.debug(f"⏭️  Not medical: {name}")
+                filtered_by_keyword += 1
+                continue
+
+            # Get NPI
+            npi = result.get("number", "")
+
+            # Get addresses
+            addresses = result.get("addresses", [])
+            practice_addr = None
+            mailing_addr = None
+
+            for addr in addresses:
+                if addr.get("address_purpose") == "LOCATION":
+                    practice_addr = addr
+                elif addr.get("address_purpose") == "MAILING":
+                    mailing_addr = addr
+
+            address = practice_addr or mailing_addr
+            if not address:
+                no_address += 1
+                continue
+
+            # Extract address details
+            address_line1 = address.get("address_1", "").strip()
+            city = address.get("city", "").strip()
+            state = address.get("state", "").strip()
+            postal_code = address.get("postal_code", "").strip()
+            phone = address.get("telephone_number", "").strip()
+            fax = address.get("fax_number", "").strip()
+
+            # Build hospital dictionary
+            hospital = {
+                "name": name,
+                "npi": npi,
+                "address": address_line1,
+                "city": city,
+                "state": state,
+                "zip": postal_code,
+                "phone": phone,
+                "fax": fax,
+                "source": "NPPES",
+                "has_fax": bool(fax),
+                "fuzzy_score": 100  # Default high score
+            }
+
+            hospitals.append(hospital)
+
         except Exception as e:
-            logger.warning(f"   ⚠️ Failed to parse result {idx}: {e}")
+            logger.error(f"❌ Error parsing result: {e}")
             continue
 
-    logger.info(f"✅ Successfully parsed {len(facilities)} facilities")
+    logger.info(f"✅ Parsed {len(hospitals)} medical facilities")
+    logger.info(
+        f"   Filtered: {filtered_by_type} individuals, {filtered_by_keyword} non-medical, {no_address} no-address")
+
+    # FIXED v4.3: Only apply fuzzy matching if we didn't use wildcard
+    # Wildcard searches already cast a broad net, trust the API results
+    if query and use_fuzzy and not used_wildcard and hospitals:
+        logger.info(f"   Applying fuzzy matching (query didn't use wildcard)")
+        hospitals = _fuzzy_match_hospitals(query, hospitals, threshold=fuzzy_threshold)
+    elif used_wildcard:
+        logger.info(f"   ⏭️  Skipping fuzzy matching (wildcard search already broad)")
+
+    # Sort results: prioritize fax, then by name
+    hospitals.sort(key=lambda x: (not x['has_fax'], x['name'].lower()))
+
+    logger.info(f"🎉 Returning {len(hospitals)} final results")
+    logger.info(f"   With fax: {sum(1 for h in hospitals if h['has_fax'])}")
+    logger.info(f"   Without fax: {sum(1 for h in hospitals if not h['has_fax'])}")
     logger.info("=" * 80)
 
-    return facilities
+    return hospitals
 
 
-def _parse_nppes_result(result: Dict, index: int) -> Optional[Dict]:
-    """
-    Parse a single NPPES result into our facility format.
+def format_search_results_for_display(hospitals: List[Dict], page: int = 1, per_page: int = 20) -> Dict:
+    """Format search results for paginated display."""
+    total_results = len(hospitals)
+    total_pages = (total_results + per_page - 1) // per_page
 
-    Args:
-        result: Raw NPPES result dictionary
-        index: Result number (for logging)
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    page_results = hospitals[start_idx:end_idx]
 
-    Returns:
-        Facility dictionary or None if parsing fails
-    """
-    try:
-        # Get basic information
-        npi = result.get("number")
-        basic = result.get("basic", {})
-        org_name = basic.get("organization_name", "")
-
-        if not org_name:
-            logger.debug(f"   ⚠️ Result {index}: No organization name, skipping")
-            return None
-
-        # Get addresses (prefer LOCATION, fallback to MAILING)
-        addresses = result.get("addresses", [])
-
-        location_address = None
-        mailing_address = None
-
-        for addr in addresses:
-            purpose = addr.get("address_purpose", "")
-            if purpose == "LOCATION":
-                location_address = addr
-            elif purpose == "MAILING":
-                mailing_address = addr
-
-        # Use LOCATION address if available, otherwise MAILING
-        address = location_address or mailing_address
-
-        if not address:
-            logger.debug(f"   ⚠️ Result {index}: No address found, skipping")
-            return None
-
-        # Extract address details
-        address_line1 = address.get("address_1", "")
-        address_line2 = address.get("address_2", "")
-        city = address.get("city", "")
-        state = address.get("state", "")
-        postal_code = address.get("postal_code", "")
-        phone = address.get("telephone_number")
-        fax = address.get("fax_number")
-
-        # Format full address string
-        full_address_parts = [address_line1]
-        if address_line2:
-            full_address_parts.append(address_line2)
-        full_address_parts.extend([city, state, postal_code])
-        full_address = ", ".join(filter(None, full_address_parts))
-
-        # Build facility dictionary
-        facility = {
-            "name": org_name,
-            "npi": npi,
-            "address": full_address,
-            "address_line1": address_line1,
-            "address_line2": address_line2,
-            "city": city,
-            "state": state,
-            "zip_code": postal_code,
-            "phone": phone,
-            "fax": fax,
-            "source": "NPPES",
-            "type": "organization"
-        }
-
-        return facility
-
-    except Exception as e:
-        logger.warning(f"   ⚠️ Error parsing result {index}: {e}")
-        return None
+    return {
+        "results": page_results,
+        "page": page,
+        "per_page": per_page,
+        "total_results": total_results,
+        "total_pages": total_pages,
+        "has_prev": page > 1,
+        "has_next": page < total_pages,
+        "start_idx": start_idx + 1 if page_results else 0,
+        "end_idx": min(end_idx, total_results)
+    }
 
 
-def validate_fax_number(fax: str) -> bool:
-    """
-    Validate that a fax number is properly formatted.
-
-    Args:
-        fax: Fax number string
-
-    Returns:
-        True if valid, False otherwise
-    """
-    if not fax:
-        return False
-
-    # Remove all non-digit characters
-    digits = re.sub(r'\D', '', fax)
-
-    # Should be 10 or 11 digits (with or without country code)
-    return len(digits) in [10, 11]
+# Cache for search results
+_search_cache = {}
 
 
-def format_fax_number(fax: str) -> str:
-    """
-    Format a fax number consistently to E.164 format.
-
-    Args:
-        fax: Raw fax number
-
-    Returns:
-        Formatted fax number (+1-XXX-XXX-XXXX)
-    """
-    if not fax:
-        return fax
-
-    # Remove all non-digit characters
-    digits = re.sub(r'\D', '', fax)
-
-    # Format as +1-XXX-XXX-XXXX
-    if len(digits) == 10:
-        return f"+1-{digits[0:3]}-{digits[3:6]}-{digits[6:10]}"
-    elif len(digits) == 11 and digits[0] == '1':
-        return f"+1-{digits[1:4]}-{digits[4:7]}-{digits[7:11]}"
-
-    return fax
+def cache_search_results(search_key: str, results: List[Dict]) -> None:
+    """Cache search results for pagination."""
+    _search_cache[search_key] = results
+    logger.debug(f"💾 Cached {len(results)} results for key: {search_key}")
 
 
-# Compatibility function for existing code
-def search_hospital_by_name(name: str, fuzzy: bool = True) -> List[Dict]:
-    """
-    Search for hospitals by name (compatibility wrapper).
+def get_cached_search_results(search_key: str) -> Optional[List[Dict]]:
+    """Retrieve cached search results."""
+    results = _search_cache.get(search_key)
+    if results:
+        logger.debug(f"💾 Retrieved {len(results)} results from cache")
+    return results
 
-    Args:
-        name: Hospital name to search for
-        fuzzy: Ignored (for compatibility)
 
-    Returns:
-        List of matching facilities
-    """
-    return search_hospitals(query=name, limit=20)
+def clear_search_cache():
+    """Clear all cached search results."""
+    _search_cache.clear()
+    logger.debug("💾 Search cache cleared")

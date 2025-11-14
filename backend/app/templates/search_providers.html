@@ -1,54 +1,317 @@
-{% extends "base.html" %}
-{% block content %}
-<section>
-  <h2>Find Your Healthcare Providers</h2>
-  <p>Search for hospitals and clinics where you've received care. We'll find their medical records fax numbers.</p>
-  
-  <form method="post" action="" class="form provider-search-form">
-    <div class="search-section">
-      <h3>Search by Name</h3>
-      <label>
-        Hospital or Clinic Name
-        <input name="search_query" type="text" placeholder="e.g., Massachusetts General Hospital">
-      </label>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Healthcare Providers - Veritas One</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .patient-info {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            border-left: 4px solid #667eea;
+        }
+
+        .patient-info strong {
+            color: #2d3748;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .patient-info span {
+            color: #4a5568;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .search-section {
+            margin-bottom: 32px;
+        }
+
+        .search-section h2 {
+            color: #2d3748;
+            font-size: 24px;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .search-option {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .search-option:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .search-option h3 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .search-option h3::before {
+            content: "🏥";
+            margin-right: 12px;
+            font-size: 24px;
+        }
+
+        .search-option p {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #a0aec0;
+        }
+
+        .info-box {
+            background: #edf2f7;
+            border-left: 4px solid #4299e1;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .info-box p {
+            color: #2d3748;
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #1a202c;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .search-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border-left: 4px solid #c53030;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .or-divider {
+            text-align: center;
+            margin: 24px 0;
+            position: relative;
+        }
+
+        .or-divider::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .or-divider span {
+            background: white;
+            padding: 0 20px;
+            color: #a0aec0;
+            font-weight: 600;
+            font-size: 14px;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Search Healthcare Providers</h1>
+            <p>Find hospitals and medical facilities to request your records from</p>
+        </div>
+
+        <div class="patient-info">
+            <strong>Patient</strong>
+            <span>{{ patient.first_name }} {{ patient.last_name }}</span>
+        </div>
+
+        {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="info-box">
+            <strong>💡 Search Tips:</strong>
+            <p>
+                • Our search uses <strong>fuzzy matching</strong> - you don't need exact names!<br>
+                • Try "Mass General" instead of "Massachusetts General Hospital"<br>
+                • Misspellings are okay - the system will find close matches<br>
+                • You can search up to <strong>200 results</strong> at once
+            </p>
+        </div>
+
+        <form method="post" action="/search-providers/{{ patient.id }}">
+            <div class="search-section">
+                <h2>Search Options</h2>
+
+                <div class="search-option">
+                    <h3>Search by Hospital Name</h3>
+                    <p>Enter any part of the hospital or facility name. The system will find all close matches.</p>
+
+                    <div class="form-group">
+                        <label for="search_query">Hospital or Facility Name</label>
+                        <input
+                            type="text"
+                            id="search_query"
+                            name="search_query"
+                            placeholder="e.g., Mayo Clinic, Cedar Sinai, Mass General"
+                            value="{{ search_query if search_query else '' }}"
+                        >
+                    </div>
+                </div>
+
+                <div class="or-divider">
+                    <span>Or</span>
+                </div>
+
+                <div class="search-option">
+                    <h3>Search by ZIP Code</h3>
+                    <p>Find all hospitals and medical facilities in a specific area.</p>
+
+                    <div class="form-group">
+                        <label for="zip_code">ZIP Code</label>
+                        <input
+                            type="text"
+                            id="zip_code"
+                            name="zip_code"
+                            placeholder="e.g., 02114, 90210"
+                            pattern="[0-9]{5}"
+                            maxlength="5"
+                            value="{{ zip_code if zip_code else '' }}"
+                        >
+                    </div>
+                </div>
+
+                <div class="info-box" style="border-left-color: #48bb78; margin-top: 24px;">
+                    <strong>✅ You can combine both!</strong>
+                    <p>Enter both a hospital name and ZIP code to narrow your search to specific facilities in a specific area.</p>
+                </div>
+            </div>
+
+            <button type="submit" class="search-btn">
+                🔍 Search Providers
+            </button>
+        </form>
     </div>
-    
-    <div class="divider">OR</div>
-    
-    <div class="search-section">
-      <h3>Search by Location</h3>
-      <div class="form-row">
-        <label class="form-col">
-          City
-          <input name="city" type="text" placeholder="e.g., Boston">
-        </label>
-        <label class="form-col">
-          State
-          <input name="state" type="text" placeholder="e.g., MA" maxlength="2">
-        </label>
-        <label class="form-col">
-          ZIP Code
-          <input name="zip_code" type="text" placeholder="e.g., 02101">
-        </label>
-      </div>
-    </div>
-    
-    <button type="submit" class="btn btn-primary">Search Providers</button>
-  </form>
-  
-  <div class="help-section">
-    <h3>💡 Tips for Finding Providers</h3>
-    <ul>
-      <li>Search by hospital name for specific facilities</li>
-      <li>Search by city/state/ZIP to find all providers in an area</li>
-      <li>You can add fax numbers manually on the next page if you already know them</li>
-      <li>We search multiple databases including Medicare and NPPES</li>
-    </ul>
-  </div>
-  
-  <div class="manual-entry-note">
-    <p><strong>Know the fax number already?</strong></p>
-    <p><a href="/review-providers/{{ patient.id }}">Skip search and enter manually</a></p>
-  </div>
-</section>
-{% endblock %}
+</body>
+</html>
