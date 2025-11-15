@@ -1,11 +1,205 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Where have you received care?</h2>
-<form method="post" action="" class="form">
-  <label>Cities (comma-separated) <input name="cities" placeholder="e.g., Austin, Seattle"></label>
-  <label>ZIP Codes (comma-separated) <input name="zips" placeholder="e.g., 94103, 78701"></label>
-  <label>Specific doctors/hospitals (JSON) <textarea name="manual_providers_json" placeholder='[{"name":"Dr Smith","fax":"+15551234567"}]'></textarea></label>
-  <button type="submit" class="btn">Start requests</button>
-</form>
-<p class="small">We will search public directories for fax numbers where available. Some locations may require manual verification.</p>
+<style>
+  .providers-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .providers-card {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 3rem;
+    box-shadow: var(--shadow-xl);
+    animation: fadeInUp 0.6s var(--ease-smooth);
+  }
+  
+  .providers-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--navy-950);
+  }
+  
+  .providers-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--terra-600);
+    margin-bottom: 0.75rem;
+  }
+  
+  .providers-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin-bottom: 0.75rem;
+  }
+  
+  .providers-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--slate-50);
+    border-left: 4px solid var(--navy-700);
+    border-radius: 8px;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--navy-950);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  
+  .section-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-light);
+  }
+  
+  .help-text {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+    margin-top: 0.5rem;
+  }
+</style>
+
+<div class="providers-container">
+  <div class="providers-card">
+    <div class="providers-header">
+      <div class="providers-eyebrow">Step 3 of 3</div>
+      <h1 class="providers-title">Where have you received care?</h1>
+      <p class="providers-subtitle">
+        We'll automatically find and contact your healthcare providers to request your medical records
+      </p>
+    </div>
+    
+    <form method="post" action="/providers/{{ patient.id }}" class="form">
+      <!-- Cities -->
+      <div class="form-section">
+        <div class="section-title">Search by Cities</div>
+        <p class="section-description">
+          Enter cities where you've received medical care (comma-separated)
+        </p>
+        
+        <div class="form-group">
+          <label for="cities">Cities</label>
+          <input 
+            type="text" 
+            id="cities" 
+            name="cities" 
+            placeholder="e.g., Austin, Seattle, Boston"
+            autocomplete="off"
+          >
+          <p class="help-text">We'll search for hospitals and medical facilities in these cities</p>
+        </div>
+      </div>
+      
+      <!-- ZIP Codes -->
+      <div class="form-section">
+        <div class="section-title">Search by ZIP Codes</div>
+        <p class="section-description">
+          Enter ZIP codes near your healthcare providers (comma-separated)
+        </p>
+        
+        <div class="form-group">
+          <label for="zips">ZIP Codes</label>
+          <input 
+            type="text" 
+            id="zips" 
+            name="zips" 
+            placeholder="e.g., 78701, 98101, 02115"
+            autocomplete="off"
+          >
+          <p class="help-text">We'll find facilities within these ZIP code areas</p>
+        </div>
+      </div>
+      
+      <!-- Manual Providers -->
+      <div class="form-section" style="border-left-color: var(--terra-600); background: var(--terra-100);">
+        <div class="section-title">Add Specific Providers (Optional)</div>
+        <p class="section-description">
+          Know a specific provider's information? Add them manually
+        </p>
+        
+        <div class="form-group">
+          <label for="manual_providers_json">Provider Details (JSON)</label>
+          <textarea 
+            id="manual_providers_json" 
+            name="manual_providers_json" 
+            placeholder='[{"name":"Dr. Smith Clinic","fax":"+15551234567"}]'
+            rows="4"
+          ></textarea>
+          <p class="help-text">
+            Advanced: Provide an array of providers with name and fax number
+          </p>
+        </div>
+      </div>
+      
+      <!-- Note -->
+      <div class="alert alert-info" style="margin-bottom: 0;">
+        <strong>ℹ️ Please Note:</strong> You must provide at least one search method (cities, ZIP codes, or manual providers). 
+        We recommend using cities or ZIP codes for the best results.
+      </div>
+      
+      <!-- Actions -->
+      <div class="form-actions">
+        <a href="/consent/{{ patient.id }}" class="btn btn-ghost">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+          </svg>
+          Back
+        </a>
+        <button type="submit" class="btn btn-primary">
+          Find Providers & Send Requests
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Info Cards -->
+  <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+    <div class="card">
+      <h4>🔍 Automatic Provider Search</h4>
+      <p class="text-muted mb-0" style="font-size: 0.875rem;">
+        We use national provider databases to find hospitals and clinics in your specified locations
+      </p>
+    </div>
+    
+    <div class="card">
+      <h4>📠 Verified Fax Numbers</h4>
+      <p class="text-muted mb-0" style="font-size: 0.875rem;">
+        Our system automatically finds and verifies medical records department fax numbers
+      </p>
+    </div>
+  </div>
+</div>
 {% endblock %}

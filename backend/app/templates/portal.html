@@ -1,236 +1,666 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Medical Records Portal - Veritas One</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        /* Additional styles for the compile all button */
-        .compile-all-section {
-            background: #e8f5e9;
-            border: 2px solid #4caf50;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
+{% extends "base.html" %}
 
-        .compile-all-button {
-            background: #4caf50;
-            color: white;
-            padding: 12px 24px;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
+{% block content %}
+<style>
+  .portal-container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  
+  .portal-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+  }
+  
+  .portal-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--terra-600);
+    margin-bottom: 0.75rem;
+  }
+  
+  .portal-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 200;
+    color: var(--navy-950);
+    margin-bottom: 0.5rem;
+  }
+  
+  .portal-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  
+  .portal-grid {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .portal-section {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    animation: fadeInUp 0.6s var(--ease-smooth);
+  }
+  
+  .portal-section:nth-child(1) { animation-delay: 0.1s; animation-fill-mode: both; }
+  .portal-section:nth-child(2) { animation-delay: 0.2s; animation-fill-mode: both; }
+  .portal-section:nth-child(3) { animation-delay: 0.3s; animation-fill-mode: both; }
+  
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--slate-200);
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .section-icon {
+    font-size: 1.5rem;
+  }
+  
+  .section-badge {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    background: var(--slate-100);
+    color: var(--slate-500);
+  }
+  
+  .badge-success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  
+  .badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  
+  .badge-info {
+    background: var(--info-bg);
+    color: var(--info);
+  }
+  
+  /* Summary Stats */
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    background: var(--slate-50);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .stat-detail {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    margin-top: 0.5rem;
+  }
+  
+  /* Tables */
+  .records-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9375rem;
+  }
+  
+  .records-table thead th {
+    background: var(--slate-50);
+    color: var(--navy-900);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.875rem 1rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border-medium);
+  }
+  
+  .records-table thead th:first-child {
+    border-top-left-radius: 8px;
+  }
+  
+  .records-table thead th:last-child {
+    border-top-right-radius: 8px;
+  }
+  
+  .records-table tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: background-color 0.15s var(--ease-smooth);
+  }
+  
+  .records-table tbody tr:hover {
+    background: var(--slate-50);
+  }
+  
+  .records-table tbody tr:last-child {
+    border-bottom: none;
+  }
+  
+  .records-table tbody td {
+    padding: 1rem;
+    color: var(--text-primary);
+  }
+  
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  
+  .status-pill-pending {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  
+  .status-pill-in_progress {
+    background: var(--info-bg);
+    color: var(--info);
+  }
+  
+  .status-pill-complete {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  
+  .status-pill-cancelled {
+    background: var(--slate-100);
+    color: var(--slate-500);
+  }
+  
+  .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  /* Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  
+  .btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+  
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 8px;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+  }
+  
+  .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  .empty-state h4 {
+    color: var(--navy-900);
+    margin-bottom: 0.5rem;
+  }
+  
+  .empty-state p {
+    margin: 0;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Compile All Section */
+  .compile-all-section {
+    background: linear-gradient(135deg, var(--slate-50) 0%, var(--terra-100) 100%);
+    border: 2px solid var(--terra-400);
+  }
+  
+  .compile-all-content {
+    text-align: center;
+  }
+  
+  .compile-all-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin-bottom: 0.75rem;
+  }
+  
+  .compile-all-description {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+  
+  .compile-all-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .compile-stat {
+    text-align: center;
+  }
+  
+  .compile-stat-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--terra-600);
+    line-height: 1;
+  }
+  
+  .compile-stat-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.5rem;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .portal-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .summary-stats {
+      grid-template-columns: 1fr;
+    }
+    
+    .records-table {
+      font-size: 0.8125rem;
+    }
+    
+    .records-table thead th,
+    .records-table tbody td {
+      padding: 0.75rem 0.5rem;
+    }
+    
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .action-buttons {
+      width: 100%;
+    }
+    
+    .btn-small {
+      flex: 1;
+    }
+  }
+</style>
 
-        .compile-all-button:hover {
-            background: #45a049;
-        }
-
-        .compile-all-button:active {
-            background: #3d8b40;
-        }
-
-        .records-info {
-            display: flex;
-            gap: 20px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-
-        .records-stat {
-            background: white;
-            padding: 10px 15px;
-            border-radius: 4px;
-            border-left: 4px solid #4caf50;
-        }
-
-        .records-stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .records-stat-value {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .date-range {
-            font-size: 14px;
-            color: #555;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>Veritas One</h1>
-            <nav>
-                <a href="/">Home</a>
-            </nav>
-        </div>
-    </header>
-
-    <div class="container">
-        <div class="card">
-            <h2>Your Medical Records Portal</h2>
-            <p><strong>Patient:</strong> {{ patient.first_name }} {{ patient.last_name }}</p>
-            <p><strong>Date of Birth:</strong> {{ patient.date_of_birth.strftime('%m/%d/%Y') if patient.date_of_birth else 'Not provided' }}</p>
-        </div>
-
-        <!-- NEW: Compile All Records Section -->
-        {% if records_summary.total_records > 0 %}
-        <div class="compile-all-section">
-            <h3>📚 Complete Medical Record</h3>
-            <p>Download all your medical records in one chronologically-ordered PDF</p>
-
-            <div class="records-info">
-                <div class="records-stat">
-                    <div class="records-stat-label">Total Records</div>
-                    <div class="records-stat-value">{{ records_summary.total_records }}</div>
-                </div>
-
-                {% if records_summary.records_with_encounter_date > 0 %}
-                <div class="records-stat">
-                    <div class="records-stat-label">Records with Dates</div>
-                    <div class="records-stat-value">{{ records_summary.records_with_encounter_date }}</div>
-                </div>
-                {% endif %}
-
-                {% if records_summary.date_range %}
-                <div class="records-stat">
-                    <div class="records-stat-label">Date Range</div>
-                    <div class="records-stat-value">
-                        {{ records_summary.date_range.earliest.strftime('%Y') }} -
-                        {{ records_summary.date_range.latest.strftime('%Y') }}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            {% if records_summary.date_range %}
-            <div class="date-range">
-                Records span from {{ records_summary.date_range.earliest.strftime('%B %d, %Y') }}
-                to {{ records_summary.date_range.latest.strftime('%B %d, %Y') }}
-            </div>
-            {% endif %}
-
-            <div style="margin-top: 15px;">
-                <a href="/portal/{{ patient.uuid }}/compile-all">
-                    <button class="compile-all-button">
-                        📥 Download All Records (Chronologically Ordered)
-                    </button>
-                </a>
-            </div>
-            <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                ℹ️ Records are ordered by the date medical services were provided, not by request date
-            </p>
-        </div>
-        {% endif %}
-
-        <!-- Per-Request Compiled Packages -->
-        {% if requests %}
-        <div class="card">
-            <h3>📋 Record Requests</h3>
-            <p>Individual requests and their compiled records</p>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Request ID</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Compiled Package</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for req in requests %}
-                    <tr>
-                        <td>{{ req.id }}</td>
-                        <td>
-                            {% if req.status == 'complete' %}
-                            <span style="color: #4caf50;">✅ Complete</span>
-                            {% elif req.status == 'in_progress' %}
-                            <span style="color: #ff9800;">⏳ In Progress</span>
-                            {% else %}
-                            <span style="color: #666;">{{ req.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ req.created_at.strftime('%m/%d/%Y %H:%M') if req.created_at else 'Unknown' }}</td>
-                        <td>
-                            {% if req.compiled_pdf_path %}
-                            <a href="/portal/{{ patient.uuid }}/download/{{ req.id }}">
-                                <button>📥 Download</button>
-                            </a>
-                            {% else %}
-                            <span style="color: #999;">Pending...</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- Individual Faxes -->
-        {% if faxes %}
-        <div class="card">
-            <h3>📄 Individual Records Received</h3>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Received</th>
-                        <th>Encounter Date</th>
-                        <th>From</th>
-                        <th>Download</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for fax in faxes %}
-                    <tr>
-                        <td>{{ fax.id }}</td>
-                        <td>{{ fax.received_time.strftime('%m/%d/%Y %H:%M') if fax.received_time else 'Unknown' }}</td>
-                        <td>
-                            {% if fax.encounter_date %}
-                            <strong>{{ fax.encounter_date.strftime('%m/%d/%Y') }}</strong>
-                            {% else %}
-                            <span style="color: #999;">Not found</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ fax.sender or 'Unknown' }}</td>
-                        <td>
-                            <a href="/portal/{{ patient.uuid }}/fax/{{ fax.id }}">
-                                <button>📄 Open PDF</button>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- Status link if active request -->
-        {% if active_request and status_url %}
-        <div class="card">
-            <p><a href="{{ status_url }}">View detailed status of active request →</a></p>
-        </div>
-        {% endif %}
-
-        <!-- New request button -->
-        <div class="card">
-            <p><a href="{{ new_request_url }}"><button>🏥 Request New Medical Records</button></a></p>
-        </div>
+<div class="portal-container">
+  <!-- Portal Header -->
+  <div class="portal-header">
+    <div class="portal-eyebrow">Patient Portal</div>
+    <h1 class="portal-title">Welcome back, {{ patient.first_name }}</h1>
+    <p class="portal-subtitle">Manage your medical records requests and downloads</p>
+  </div>
+  
+  <!-- Summary Statistics -->
+  {% if records_summary and records_summary.total_records > 0 %}
+  <div class="summary-stats">
+    <div class="stat-card">
+      <div class="stat-value">{{ records_summary.total_records }}</div>
+      <div class="stat-label">Total Records</div>
     </div>
-</body>
-</html>
+    
+    <div class="stat-card">
+      <div class="stat-value">{{ records_summary.records_with_encounter_date }}</div>
+      <div class="stat-label">With Encounter Date</div>
+      {% if records_summary.total_records > 0 %}
+      <div class="stat-detail">
+        {{ ((records_summary.records_with_encounter_date / records_summary.total_records) * 100) | round(1) }}% of records
+      </div>
+      {% endif %}
+    </div>
+    
+    {% if records_summary.date_range %}
+    <div class="stat-card">
+      <div class="stat-value" style="font-size: 1.5rem;">
+        {{ records_summary.date_range.earliest.strftime('%b %Y') }}
+        <span style="font-size: 1rem; color: var(--text-tertiary);">to</span>
+        {{ records_summary.date_range.latest.strftime('%b %Y') }}
+      </div>
+      <div class="stat-label">Date Range</div>
+      <div class="stat-detail">{{ records_summary.date_range.span_years }} year span</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+  
+  <!-- Active Request Alert -->
+  {% if active_request %}
+  <div class="alert alert-info" style="animation-delay: 0.2s;">
+    <strong>📋 Active Request in Progress</strong> — 
+    Your request is being processed. 
+    <a href="/status/{{ active_request.id }}" style="color: var(--info); text-decoration: underline; font-weight: 700;">
+      View detailed status &rarr;
+    </a>
+  </div>
+  {% endif %}
+  
+  <!-- Compile All Records Section -->
+  {% if records_summary and records_summary.total_records > 0 %}
+  <div class="portal-section compile-all-section">
+    <div class="compile-all-content">
+      <h3 class="compile-all-title">📚 Download All Records</h3>
+      <p class="compile-all-description">
+        Compile all your medical records into a single, chronologically-ordered PDF
+      </p>
+      
+      <div class="compile-all-stats">
+        <div class="compile-stat">
+          <div class="compile-stat-value">{{ records_summary.total_records }}</div>
+          <div class="compile-stat-label">Documents</div>
+        </div>
+        {% if records_summary.date_range %}
+        <div class="compile-stat">
+          <div class="compile-stat-value">{{ records_summary.date_range.span_years }}</div>
+          <div class="compile-stat-label">Years of Care</div>
+        </div>
+        {% endif %}
+      </div>
+      
+      <form method="post" action="/portal/{{ patient.uuid }}/compile-all">
+        <button type="submit" class="btn btn-accent btn-large">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink: 0;">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+          </svg>
+          Compile & Download All Records
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+  
+  <div class="portal-grid">
+    <!-- Record Requests Section -->
+    <div class="portal-section">
+      <div class="section-header">
+        <h3 class="section-title">
+          <span class="section-icon">📋</span>
+          Record Requests
+        </h3>
+        <span class="section-badge">{{ requests|length }} Total</span>
+      </div>
+      
+      {% if requests %}
+      <div style="overflow-x: auto;">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>Request ID</th>
+              <th>Status</th>
+              <th>Providers</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in requests %}
+            <tr>
+              <td>
+                <span class="font-mono" style="font-weight: 600;">
+                  #{{ req.id }}
+                </span>
+              </td>
+              <td>
+                <span class="status-pill status-pill-{{ req.status }}">
+                  {% if req.status == 'in_progress' %}
+                    <span class="status-indicator"></span>
+                  {% endif %}
+                  {{ req.status.replace('_', ' ').title() }}
+                </span>
+              </td>
+              <td>
+                {% if req.provider_requests %}
+                  <span style="font-weight: 600;">{{ req.provider_requests|length }}</span> providers
+                  <span style="color: var(--text-tertiary); font-size: 0.875rem;">
+                    ({{ req.provider_requests|selectattr('status', 'equalto', 'response_received')|list|length }} received)
+                  </span>
+                {% else %}
+                  <span style="color: var(--text-tertiary);">—</span>
+                {% endif %}
+              </td>
+              <td>
+                <span style="color: var(--text-secondary);">
+                  {{ req.created_at.strftime('%b %d, %Y') }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <a href="/status/{{ req.id }}" class="btn btn-secondary btn-small">
+                    View Status
+                  </a>
+                  {% if req.status == 'complete' and req.compiled_pdf_path %}
+                  <a href="/portal/{{ patient.uuid }}/download-compiled/{{ req.id }}" class="btn btn-primary btn-small">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                    Download PDF
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h4>No Record Requests Yet</h4>
+        <p>You haven't created any medical records requests. Start by selecting your healthcare providers.</p>
+        <a href="/search-providers/{{ patient.id }}" class="btn btn-primary" style="margin-top: 1.5rem;">
+          Start New Request
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    
+    <!-- Individual Faxes Section -->
+    <div class="portal-section">
+      <div class="section-header">
+        <h3 class="section-title">
+          <span class="section-icon">📄</span>
+          Individual Records
+        </h3>
+        <span class="section-badge {% if faxes %}badge-success{% endif %}">
+          {{ faxes|length }} Received
+        </span>
+      </div>
+      
+      {% if faxes %}
+      <div style="overflow-x: auto;">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>Fax ID</th>
+              <th>From Provider</th>
+              <th>Encounter Date</th>
+              <th>Received</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fax in faxes %}
+            <tr>
+              <td>
+                <span class="font-mono" style="font-weight: 600; font-size: 0.875rem;">
+                  #{{ fax.id }}
+                </span>
+              </td>
+              <td>
+                <span style="font-weight: 600;">
+                  {% if fax.sender %}
+                    {{ fax.sender }}
+                  {% else %}
+                    <span style="color: var(--text-tertiary);">Unknown</span>
+                  {% endif %}
+                </span>
+              </td>
+              <td>
+                {% if fax.encounter_date %}
+                  <span style="font-weight: 600; color: var(--terra-600);">
+                    {{ fax.encounter_date.strftime('%b %d, %Y') }}
+                  </span>
+                {% else %}
+                  <span style="color: var(--text-tertiary);">—</span>
+                {% endif %}
+              </td>
+              <td>
+                <span style="color: var(--text-secondary);">
+                  {{ fax.received_time.strftime('%b %d, %Y %I:%M %p') if fax.received_time else 'Unknown' }}
+                </span>
+              </td>
+              <td>
+                <a href="/portal/{{ patient.uuid }}/fax/{{ fax.id }}" class="btn btn-primary btn-icon" title="Download PDF">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                  </svg>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📄</div>
+        <h4>No Records Received Yet</h4>
+        <p>Once providers respond to your requests, individual records will appear here.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <!-- Quick Actions -->
+  <div class="portal-section" style="margin-top: 2rem; background: var(--slate-50); animation-delay: 0.4s;">
+    <div class="section-header" style="border-bottom: none; margin-bottom: 0;">
+      <h3 class="section-title">
+        <span class="section-icon">⚡</span>
+        Quick Actions
+      </h3>
+    </div>
+    <div class="action-buttons">
+      <a href="/search-providers/{{ patient.id }}" class="btn btn-primary">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        Add More Providers
+      </a>
+      
+      {% if active_request %}
+      <a href="/status/{{ active_request.id }}" class="btn btn-secondary">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+        </svg>
+        View Current Status
+      </a>
+      {% endif %}
+      
+      <a href="/" class="btn btn-ghost">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+        </svg>
+        Back to Home
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

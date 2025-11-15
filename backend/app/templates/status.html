@@ -1,37 +1,524 @@
 {% extends "base.html" %}
+
 {% block content %}
-    <form method="post" action="{{ cancel_url }}" style="display: inline;">
-    <button type="submit" onclick="return confirm('Cancel and start over?')">
-        ❌ Cancel & Start New
-    </button>
-</form>
-<a href="{{ add_providers_url }}">➕ Add More Providers</a>
-<a href="{{ portal_url }}">📁 View Portal</a>
-<h2>Request Status</h2>
-{% if rr %}
-<p><strong>Request ID:</strong> {{ rr.id }}<br>
-<strong>Status:</strong> {{ rr.status }}</p>
-{% if rr and rr.patient %}
-  <p><strong>Portal link:</strong> <a href="/portal/{{ rr.patient.uuid }}" target="_blank">/portal/{{ rr.patient.uuid }}</a></p>
-{% endif %}
-{% if rr and rr.compiled_pdf_path %}
-  <p><a class="btn" href="/portal/{{ rr.patient.uuid }}/download/{{ rr.id }}">Download compiled PDF</a></p>
-{% endif %}
-<table>
-  <thead><tr><th>Provider</th><th>Fax</th><th>Status</th><th>Sent</th><th>Responded</th></tr></thead>
-  <tbody>
-  {% for pr in prs %}
-    <tr>
-      <td>{{ pr.provider.name if pr.provider else "Unknown" }}</td>
-      <td>{{ pr.fax_number_used or (pr.provider.fax if pr.provider) }}</td>
-      <td>{{ pr.status }}</td>
-      <td>{{ pr.sent_at }}</td>
-      <td>{{ pr.responded_at }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p>Request not found.</p>
-{% endif %}
+<style>
+  .status-container {
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  
+  .status-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+  }
+  
+  .status-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--terra-600);
+    margin-bottom: 0.75rem;
+  }
+  
+  .status-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 200;
+    color: var(--navy-950);
+    margin-bottom: 0.75rem;
+  }
+  
+  .status-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  
+  /* Progress Summary */
+  .progress-summary {
+    background: linear-gradient(135deg, var(--slate-50) 0%, var(--info-bg) 100%);
+    border: 2px solid var(--info);
+    border-radius: 16px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+    animation-delay: 0.1s;
+    animation-fill-mode: both;
+  }
+  
+  .progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+  
+  .progress-stat {
+    text-align: center;
+  }
+  
+  .progress-value {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    line-height: 1;
+  }
+  
+  .progress-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.5rem;
+  }
+  
+  .progress-bar-container {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 1.5rem;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background: var(--info);
+    border-radius: 6px;
+    transition: width 1s var(--ease-smooth);
+  }
+  
+  /* Status Card */
+  .status-card {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+    animation-delay: 0.2s;
+    animation-fill-mode: both;
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--slate-200);
+  }
+  
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin: 0;
+  }
+  
+  /* Provider List */
+  .providers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .provider-item {
+    background: var(--slate-50);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  
+  .provider-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(4px);
+  }
+  
+  .provider-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .provider-info {
+    flex: 1;
+  }
+  
+  .provider-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--navy-950);
+    margin-bottom: 0.5rem;
+  }
+  
+  .provider-fax {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .provider-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+  
+  .status-badge {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+  
+  .status-badge.queued {
+    background: var(--slate-200);
+    color: var(--slate-500);
+  }
+  
+  .status-badge.fax_sent {
+    background: var(--info-bg);
+    color: var(--info);
+  }
+  
+  .status-badge.fax_delivered {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  
+  .status-badge.response_received {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  
+  .status-badge.fax_failed {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  
+  .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  
+  .status-indicator.pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  .provider-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  
+  .timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .timeline-icon {
+    color: var(--terra-600);
+  }
+  
+  /* Action Buttons */
+  .action-section {
+    background: var(--slate-50);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+    animation-delay: 0.3s;
+    animation-fill-mode: both;
+  }
+  
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  
+  .action-card {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  
+  .action-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  
+  .action-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .action-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy-950);
+    margin-bottom: 0.5rem;
+  }
+  
+  .action-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+  }
+  
+  /* Alert Boxes */
+  .info-box {
+    background: var(--info-bg);
+    border-left: 4px solid var(--info);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    animation: slideInLeft 0.4s var(--ease-smooth);
+  }
+  
+  .info-box p {
+    margin: 0;
+    color: var(--info);
+    font-weight: 500;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .progress-stats {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .provider-header {
+      flex-direction: column;
+    }
+    
+    .provider-status {
+      align-items: flex-start;
+      width: 100%;
+    }
+    
+    .action-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="status-container">
+  <!-- Status Header -->
+  <div class="status-header">
+    <div class="status-eyebrow">Request Status</div>
+    <h1 class="status-title">Request #{{ rr.id }}</h1>
+    <p class="status-subtitle">Track your medical records request progress</p>
+  </div>
+  
+  <!-- Progress Summary -->
+  <div class="progress-summary">
+    <h3 style="margin-bottom: 0.5rem; color: var(--navy-950);">Request Progress</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+      {% if rr.status == 'complete' %}
+        ✅ All records received and compiled
+      {% elif rr.status == 'in_progress' %}
+        ⏳ Waiting for provider responses
+      {% elif rr.status == 'pending' %}
+        📋 Request is being prepared
+      {% elif rr.status == 'cancelled' %}
+        ❌ Request has been cancelled
+      {% else %}
+        🔄 Processing...
+      {% endif %}
+    </p>
+    
+    <div class="progress-stats">
+      <div class="progress-stat">
+        <div class="progress-value">{{ prs|length }}</div>
+        <div class="progress-label">Total Providers</div>
+      </div>
+      
+      <div class="progress-stat">
+        <div class="progress-value">{{ prs|selectattr('status', 'equalto', 'response_received')|list|length }}</div>
+        <div class="progress-label">Responses Received</div>
+      </div>
+      
+      <div class="progress-stat">
+        <div class="progress-value">{{ prs|selectattr('status', 'equalto', 'fax_delivered')|list|length }}</div>
+        <div class="progress-label">Faxes Delivered</div>
+      </div>
+    </div>
+    
+    {% set total_count = prs|length %}
+    {% set received_count = prs|selectattr('status', 'equalto', 'response_received')|list|length %}
+    {% set progress_percent = (received_count / total_count * 100) if total_count > 0 else 0 %}
+    
+    <div class="progress-bar-container">
+      <div class="progress-bar" style="width: {{ progress_percent }}%;"></div>
+    </div>
+  </div>
+  
+  <!-- Status Information -->
+  {% if rr.status == 'complete' and rr.compiled_pdf_path %}
+  <div class="alert alert-success">
+    <strong>✅ Request Complete!</strong> Your medical records have been compiled and are ready for download.
+    <a href="{{ portal_url }}" style="color: var(--success); text-decoration: underline; font-weight: 700; margin-left: 0.5rem;">
+      View in portal &rarr;
+    </a>
+  </div>
+  {% elif rr.status == 'in_progress' %}
+  <div class="info-box">
+    <p>
+      <strong>ℹ️ In Progress:</strong> Your request has been sent to {{ prs|length }} providers. 
+      They typically respond within 7-14 business days. You'll receive an email when records arrive.
+    </p>
+  </div>
+  {% endif %}
+  
+  <!-- Provider Requests -->
+  <div class="status-card">
+    <div class="card-header">
+      <h3 class="card-title">Provider Requests</h3>
+      <span class="section-badge">{{ prs|length }} Providers</span>
+    </div>
+    
+    {% if prs %}
+    <div class="providers-list">
+      {% for pr in prs %}
+      <div class="provider-item">
+        <div class="provider-header">
+          <div class="provider-info">
+            <div class="provider-name">
+              {% if pr.provider %}
+                {{ pr.provider.name }}
+              {% else %}
+                Provider #{{ pr.id }}
+              {% endif %}
+            </div>
+            <div class="provider-fax">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M3.5 11.5a3 3 0 0 1-3-3v-6a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3z"/>
+                <path d="M3.5 0a.5.5 0 0 1 .5.5v5.793L5.354 5.146a.5.5 0 1 1 .708.708l-1.5 1.5a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L4 6.293V.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M13 7V2H7v5h6z"/>
+                <path d="M6 0v1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-4V0H6z"/>
+              </svg>
+              {{ pr.fax_number_used or 'Unknown' }}
+            </div>
+          </div>
+          
+          <div class="provider-status">
+            <span class="status-badge {{ pr.status }}">
+              <span class="status-indicator {% if pr.status in ['fax_sent', 'fax_delivered'] %}pulse{% endif %}"></span>
+              {{ pr.status.replace('_', ' ').title() }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="provider-timeline">
+          {% if pr.sent_at %}
+          <div class="timeline-item">
+            <span class="timeline-icon">📤</span>
+            <strong>Sent:</strong> {{ pr.sent_at.strftime('%b %d, %Y at %I:%M %p') }}
+          </div>
+          {% endif %}
+          
+          {% if pr.delivered_at %}
+          <div class="timeline-item">
+            <span class="timeline-icon">✓</span>
+            <strong>Delivered:</strong> {{ pr.delivered_at.strftime('%b %d, %Y at %I:%M %p') }}
+          </div>
+          {% endif %}
+          
+          {% if pr.responded_at %}
+          <div class="timeline-item">
+            <span class="timeline-icon">📥</span>
+            <strong>Received:</strong> {{ pr.responded_at.strftime('%b %d, %Y at %I:%M %p') }}
+          </div>
+          {% endif %}
+          
+          {% if pr.failed_reason %}
+          <div class="timeline-item" style="color: var(--danger);">
+            <span class="timeline-icon">⚠️</span>
+            <strong>Error:</strong> {{ pr.failed_reason }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p style="color: var(--text-secondary);">No provider requests found.</p>
+    </div>
+    {% endif %}
+  </div>
+  
+  <!-- Actions -->
+  <div class="action-section">
+    <h3 style="margin-bottom: 1.5rem; color: var(--navy-950);">What would you like to do?</h3>
+    
+    <div class="action-grid">
+      <div class="action-card">
+        <div class="action-icon">👁️</div>
+        <h4 class="action-title">View Portal</h4>
+        <p class="action-description">See all your requests and download records</p>
+        <a href="{{ portal_url }}" class="btn btn-primary btn-small">Go to Portal</a>
+      </div>
+      
+      <div class="action-card">
+        <div class="action-icon">➕</div>
+        <h4 class="action-title">Add More Providers</h4>
+        <p class="action-description">Request records from additional healthcare facilities</p>
+        <a href="{{ add_providers_url }}" class="btn btn-secondary btn-small">Add Providers</a>
+      </div>
+      
+      {% if rr.status in ['pending', 'in_progress'] %}
+      <div class="action-card">
+        <div class="action-icon">❌</div>
+        <h4 class="action-title">Cancel Request</h4>
+        <p class="action-description">Cancel this request and start over</p>
+        <form method="post" action="{{ cancel_url }}" style="margin-top: 0.5rem;">
+          <button type="submit" class="btn btn-ghost btn-small" 
+                  onclick="return confirm('Are you sure you want to cancel this request?')">
+            Cancel Request
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <!-- Additional Info -->
+  <div style="text-align: center; margin-top: 2rem; padding: 2rem; background: var(--slate-50); border-radius: 12px;">
+    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">
+      <strong>Need help?</strong> Most providers respond within 7-14 business days. 
+      If you haven't received responses after 3 weeks, please contact support.
+    </p>
+  </div>
+</div>
 {% endblock %}

@@ -3,315 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Healthcare Providers - Veritas One</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            color: #2d3748;
-            font-size: 32px;
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-
-        .header p {
-            color: #718096;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
-        .patient-info {
-            background: #f7fafc;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 32px;
-            border-left: 4px solid #667eea;
-        }
-
-        .patient-info strong {
-            color: #2d3748;
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .patient-info span {
-            color: #4a5568;
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .search-section {
-            margin-bottom: 32px;
-        }
-
-        .search-section h2 {
-            color: #2d3748;
-            font-size: 24px;
-            margin-bottom: 24px;
-            font-weight: 600;
-        }
-
-        .search-option {
-            background: #ffffff;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .search-option:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-        }
-
-        .search-option h3 {
-            color: #2d3748;
-            font-size: 18px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            font-weight: 600;
-        }
-
-        .search-option h3::before {
-            content: "🏥";
-            margin-right: 12px;
-            font-size: 24px;
-        }
-
-        .search-option p {
-            color: #718096;
-            font-size: 14px;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            color: #4a5568;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-group input::placeholder {
-            color: #a0aec0;
-        }
-
-        .info-box {
-            background: #edf2f7;
-            border-left: 4px solid #4299e1;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-        }
-
-        .info-box p {
-            color: #2d3748;
-            font-size: 14px;
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        .info-box strong {
-            color: #1a202c;
-            display: block;
-            margin-bottom: 8px;
-            font-size: 15px;
-        }
-
-        .search-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .search-btn:active {
-            transform: translateY(0);
-        }
-
-        .error-message {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            border-left: 4px solid #c53030;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .or-divider {
-            text-align: center;
-            margin: 24px 0;
-            position: relative;
-        }
-
-        .or-divider::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e2e8f0;
-        }
-
-        .or-divider span {
-            background: white;
-            padding: 0 20px;
-            color: #a0aec0;
-            font-weight: 600;
-            font-size: 14px;
-            position: relative;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-    </style>
+    <title>Search Providers - Veritas One</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏥 Search Healthcare Providers</h1>
-            <p>Find hospitals and medical facilities to request your records from</p>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">Veritas One</a>
+                <nav>
+                    <ul class="nav-links">
+                        <li><span class="text-muted">Welcome, {{ patient.first_name }}</span></li>
+                    </ul>
+                </nav>
+            </div>
         </div>
+    </header>
 
-        <div class="patient-info">
-            <strong>Patient</strong>
-            <span>{{ patient.first_name }} {{ patient.last_name }}</span>
-        </div>
-
-        {% if error %}
-        <div class="error-message">
-            {{ error }}
-        </div>
-        {% endif %}
-
-        <div class="info-box">
-            <strong>💡 Search Tips:</strong>
-            <p>
-                • Our search uses <strong>fuzzy matching</strong> - you don't need exact names!<br>
-                • Try "Mass General" instead of "Massachusetts General Hospital"<br>
-                • Misspellings are okay - the system will find close matches<br>
-                • You can search up to <strong>200 results</strong> at once
-            </p>
-        </div>
-
-        <form method="post" action="/search-providers/{{ patient.id }}">
-            <div class="search-section">
-                <h2>Search Options</h2>
-
-                <div class="search-option">
-                    <h3>Search by Hospital Name</h3>
-                    <p>Enter any part of the hospital or facility name. The system will find all close matches.</p>
-
-                    <div class="form-group">
-                        <label for="search_query">Hospital or Facility Name</label>
-                        <input
-                            type="text"
-                            id="search_query"
-                            name="search_query"
-                            placeholder="e.g., Mayo Clinic, Cedar Sinai, Mass General"
-                            value="{{ search_query if search_query else '' }}"
-                        >
-                    </div>
-                </div>
-
-                <div class="or-divider">
-                    <span>Or</span>
-                </div>
-
-                <div class="search-option">
-                    <h3>Search by ZIP Code</h3>
-                    <p>Find all hospitals and medical facilities in a specific area.</p>
-
-                    <div class="form-group">
-                        <label for="zip_code">ZIP Code</label>
-                        <input
-                            type="text"
-                            id="zip_code"
-                            name="zip_code"
-                            placeholder="e.g., 02114, 90210"
-                            pattern="[0-9]{5}"
-                            maxlength="5"
-                            value="{{ zip_code if zip_code else '' }}"
-                        >
-                    </div>
-                </div>
-
-                <div class="info-box" style="border-left-color: #48bb78; margin-top: 24px;">
-                    <strong>✅ You can combine both!</strong>
-                    <p>Enter both a hospital name and ZIP code to narrow your search to specific facilities in a specific area.</p>
-                </div>
+    <!-- Main Content -->
+    <section>
+        <div class="container container-narrow">
+            <div class="text-center mb-xl">
+                <h1 style="margin-bottom: var(--space-sm);">Find Your Healthcare Providers</h1>
+                <p class="text-muted">Search for hospitals and clinics where you've received care</p>
             </div>
 
-            <button type="submit" class="search-btn">
-                🔍 Search Providers
-            </button>
-        </form>
-    </div>
+            {% if error %}
+            <div class="alert alert-error">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+                </svg>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Search Form -->
+            <form method="post" action="/search-providers/{{ patient.id }}" class="form">
+                <div class="card">
+                    <h3 style="margin-bottom: var(--space-lg);">Search by Hospital Name</h3>
+                    
+                    <div class="form-field">
+                        <label for="search_query">Hospital or Medical Center Name</label>
+                        <input 
+                            type="text" 
+                            id="search_query" 
+                            name="search_query" 
+                            placeholder="e.g., Massachusetts General Hospital, Mayo Clinic"
+                            value="{{ search_query or '' }}"
+                        >
+                        <p class="text-small text-muted mt-sm">
+                            Enter the name of any hospital, clinic, or medical center
+                        </p>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: var(--space-xl) 0;">
+                    <span style="display: inline-block; padding: var(--space-sm) var(--space-lg); background: var(--paper); border-radius: 50px; font-weight: 600; color: var(--ink-medium); font-size: 0.875rem;">
+                        OR
+                    </span>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: var(--space-lg);">Search by Location</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="city">City</label>
+                            <input 
+                                type="text" 
+                                id="city" 
+                                name="city" 
+                                placeholder="e.g., Boston"
+                                value="{{ city or '' }}"
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label for="state">State</label>
+                            <input 
+                                type="text" 
+                                id="state" 
+                                name="state" 
+                                placeholder="e.g., MA"
+                                maxlength="2"
+                                style="text-transform: uppercase;"
+                                value="{{ state or '' }}"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="zip_code">ZIP Code</label>
+                        <input 
+                            type="text" 
+                            id="zip_code" 
+                            name="zip_code" 
+                            placeholder="e.g., 02114"
+                            pattern="[0-9]{5}"
+                            maxlength="5"
+                            value="{{ zip_code or '' }}"
+                        >
+                    </div>
+                </div>
+
+                <div style="background: var(--medical-blue-subtle); padding: var(--space-lg); border-radius: 12px; border-left: 4px solid var(--medical-blue); margin: var(--space-xl) 0;">
+                    <p class="text-small mb-sm" style="color: var(--ink-medium); font-weight: 600;">
+                        💡 Search Tips
+                    </p>
+                    <ul style="margin: 0; padding-left: var(--space-lg); color: var(--ink-medium); font-size: 0.875rem; line-height: 1.6;">
+                        <li>Try searching by hospital name for fastest results</li>
+                        <li>Use city and state to find all facilities in an area</li>
+                        <li>You can search multiple times to add more providers</li>
+                        <li>We'll automatically find fax numbers when possible</li>
+                    </ul>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" onclick="window.history.back()" class="btn btn-ghost">
+                        Back
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                        Search Providers
+                    </button>
+                </div>
+            </form>
+
+            <!-- Progress Indicator -->
+            <div style="max-width: 600px; margin: var(--space-2xl) auto;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-sm);">
+                    <div style="width: 32px; height: 32px; background: var(--success); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem;">✓</div>
+                    <div style="flex: 1; height: 2px; background: var(--success);"></div>
+                    <div style="width: 32px; height: 32px; background: var(--success); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem;">✓</div>
+                    <div style="flex: 1; height: 2px; background: var(--medical-blue);"></div>
+                    <div style="width: 32px; height: 32px; background: var(--medical-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem;">3</div>
+                    <div style="flex: 1; height: 2px; background: var(--border);"></div>
+                    <div style="width: 32px; height: 32px; background: var(--border-subtle); color: var(--ink-lighter); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem;">4</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: var(--space-sm);">
+                    <span class="text-small" style="color: var(--success); font-weight: 600;">Register</span>
+                    <span class="text-small" style="color: var(--success); font-weight: 600;">Consent</span>
+                    <span class="text-small" style="color: var(--medical-blue); font-weight: 600;">Providers</span>
+                    <span class="text-small text-muted">Complete</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <p class="footer-text">&copy; 2025 Veritas One. HIPAA Compliant Medical Records Service.</p>
+                </div>
+                <ul class="footer-links">
+                    <li><a href="/privacy">Privacy</a></li>
+                    <li><a href="/terms">Terms</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Auto-uppercase state input
+        const stateInput = document.getElementById('state');
+        if (stateInput) {
+            stateInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const searchQuery = document.getElementById('search_query').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const state = document.getElementById('state').value.trim();
+            const zipCode = document.getElementById('zip_code').value.trim();
+
+            if (!searchQuery && !city && !state && !zipCode) {
+                e.preventDefault();
+                alert('Please enter either a hospital name or a location (city, state, or ZIP code).');
+                return false;
+            }
+        });
+    </script>
 </body>
 </html>

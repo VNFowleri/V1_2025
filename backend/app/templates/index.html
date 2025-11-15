@@ -1,56 +1,483 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="hero">
-  <h2>Collect all your medical records—automatically</h2>
-  <p>We fax HIPAA-compliant requests to the hospitals and clinics you've visited, then receive and OCR their responses into one searchable PDF—ready to download from your portal.</p>
+<style>
+  /* Landing Page Specific Styles */
+  .hero-section {
+    padding: 4rem 0 6rem;
+    text-align: center;
+    position: relative;
+  }
+  
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(200, 104, 68, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float 8s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-30px) scale(1.05);
+    }
+  }
+  
+  .hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--terra-600);
+    margin-bottom: 1.5rem;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+    animation-delay: 0.1s;
+    animation-fill-mode: both;
+  }
+  
+  .hero-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 200;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    color: var(--navy-950);
+    animation: fadeInUp 0.8s var(--ease-smooth);
+    animation-delay: 0.2s;
+    animation-fill-mode: both;
+  }
+  
+  .hero-title .highlight {
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+  }
+  
+  .hero-description {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin: 0 auto 2.5rem;
+    max-width: 600px;
+    animation: fadeInUp 0.8s var(--ease-smooth);
+    animation-delay: 0.3s;
+    animation-fill-mode: both;
+  }
+  
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeInUp 0.8s var(--ease-smooth);
+    animation-delay: 0.4s;
+    animation-fill-mode: both;
+  }
+  
+  /* Process Section */
+  .process-section {
+    padding: 5rem 0;
+    background: white;
+    margin: 4rem 0;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    animation: fadeInUp 0.8s var(--ease-smooth);
+    animation-delay: 0.5s;
+    animation-fill-mode: both;
+  }
+  
+  .section-header {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 3rem;
+  }
+  
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--terra-600);
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  
+  .section-title {
+    font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+    color: var(--navy-950);
+    margin-bottom: 1rem;
+  }
+  
+  .section-description {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+  
+  .step-card {
+    position: relative;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  
+  .step-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--terra-400);
+  }
+  
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+    color: white;
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .step-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin-bottom: 0.75rem;
+  }
+  
+  .step-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+  
+  /* Features Section */
+  .features-section {
+    padding: 4rem 0;
+  }
+  
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+  
+  .feature-card {
+    padding: 2.5rem;
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s var(--ease-smooth);
+  }
+  
+  .feature-card:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-4px);
+  }
+  
+  .feature-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--terra-100);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+  }
+  
+  .feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin-bottom: 0.75rem;
+  }
+  
+  .feature-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+  
+  /* Trust Section */
+  .trust-section {
+    padding: 4rem 2.5rem;
+    background: var(--navy-950);
+    color: white;
+    border-radius: 16px;
+    text-align: center;
+    margin: 4rem 0 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .trust-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(200, 104, 68, 0.15) 0%, transparent 50%);
+    animation: rotate 20s linear infinite;
+  }
+  
+  @keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .trust-content {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  .trust-title {
+    font-size: clamp(1.875rem, 3.5vw, 2.5rem);
+    margin-bottom: 1rem;
+    color: white;
+  }
+  
+  .trust-description {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .trust-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 2.5rem;
+  }
+  
+  .trust-feature {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .trust-feature-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--terra-400);
+    font-size: 1rem;
+  }
+  
+  .trust-feature-description {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9375rem;
+    margin: 0;
+  }
+  
+  /* Staggered animation delays for cards */
+  .step-card:nth-child(1) { animation: fadeInUp 0.6s var(--ease-smooth) 0.1s both; }
+  .step-card:nth-child(2) { animation: fadeInUp 0.6s var(--ease-smooth) 0.2s both; }
+  .step-card:nth-child(3) { animation: fadeInUp 0.6s var(--ease-smooth) 0.3s both; }
+  .step-card:nth-child(4) { animation: fadeInUp 0.6s var(--ease-smooth) 0.4s both; }
+  
+  .feature-card:nth-child(1) { animation: fadeInUp 0.6s var(--ease-smooth) 0.1s both; }
+  .feature-card:nth-child(2) { animation: fadeInUp 0.6s var(--ease-smooth) 0.2s both; }
+  .feature-card:nth-child(3) { animation: fadeInUp 0.6s var(--ease-smooth) 0.3s both; }
+  
+  @media (max-width: 768px) {
+    .hero-section {
+      padding: 3rem 0 4rem;
+    }
+    
+    .process-section,
+    .features-section {
+      padding: 3rem 1.5rem;
+    }
+    
+    .trust-section {
+      padding: 3rem 1.5rem;
+      margin: 3rem 0 1rem;
+    }
+    
+    .hero-actions {
+      flex-direction: column;
+    }
+    
+    .hero-actions .btn {
+      width: 100%;
+    }
+    
+    .steps-grid,
+    .features-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+  }
+</style>
 
-  <div class="cta-buttons">
-    <a class="btn btn-primary" href="/register">Get Started - Sign Up</a>
-    <a class="btn btn-secondary" href="/login">Already have an account? Log In</a>
+<section class="hero-section">
+  <div class="hero-content">
+    <div class="hero-eyebrow">Medical Records, Simplified</div>
+    <h1 class="hero-title">
+      Collect all your medical records—<span class="highlight">automatically</span>
+    </h1>
+    <p class="hero-description">
+      We handle the complexity of gathering your complete medical history. 
+      HIPAA-compliant requests, intelligent processing, and one searchable archive—all in your secure portal.
+    </p>
+    <div class="hero-actions">
+      <a href="/register" class="btn btn-primary">Get Started</a>
+      <a href="/login" class="btn btn-secondary">Sign In</a>
+    </div>
   </div>
 </section>
 
-<section class="how-it-works">
-  <h3>How It Works</h3>
-  <div class="steps">
-    <div class="step">
-      <div class="step-number">1</div>
-      <h4>Sign Up & Consent</h4>
-      <p>Create your account and sign a HIPAA-compliant authorization</p>
+<section class="process-section">
+  <div class="section-header">
+    <span class="section-label">How It Works</span>
+    <h2 class="section-title">Four steps to your complete medical history</h2>
+    <p class="section-description">
+      Our automated system handles the entire process, from consent to delivery
+    </p>
+  </div>
+  
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-number">01</div>
+      <h3 class="step-title">Sign & Consent</h3>
+      <p class="step-description">
+        Create your account and provide digital consent with our HIPAA-compliant authorization form. Your signature is securely stored and attached to all requests.
+      </p>
     </div>
-    <div class="step">
-      <div class="step-number">2</div>
-      <h4>Find Your Providers</h4>
-      <p>Search for hospitals and clinics where you've received care</p>
+    
+    <div class="step-card">
+      <div class="step-number">02</div>
+      <h3 class="step-title">Find Providers</h3>
+      <p class="step-description">
+        Search our national database of hospitals and clinics. We intelligently match facilities and verify medical records fax numbers for accurate delivery.
+      </p>
     </div>
-    <div class="step">
-      <div class="step-number">3</div>
-      <h4>We Send Requests</h4>
-      <p>We automatically fax medical record requests to each provider</p>
+    
+    <div class="step-card">
+      <div class="step-number">03</div>
+      <h3 class="step-title">Automated Requests</h3>
+      <p class="step-description">
+        We automatically generate and fax professional medical release forms to each provider on your behalf. Track every request in real-time.
+      </p>
     </div>
-    <div class="step">
-      <div class="step-number">4</div>
-      <h4>Download Your Records</h4>
-      <p>Access your compiled, searchable medical records from your portal</p>
+    
+    <div class="step-card">
+      <div class="step-number">04</div>
+      <h3 class="step-title">Download Records</h3>
+      <p class="step-description">
+        Incoming faxes are automatically processed with OCR, matched to your account, and compiled into searchable PDFs ready for download.
+      </p>
     </div>
   </div>
 </section>
 
-<section class="features">
-  <h3>Why Veritas One?</h3>
-  <div class="feature-grid">
-    <div class="feature">
-      <h4>🔒 Secure Portal</h4>
-      <p>Your records are accessible only to you</p>
+<section class="features-section">
+  <div class="section-header">
+    <span class="section-label">Features</span>
+    <h2 class="section-title">Built for healthcare complexity</h2>
+  </div>
+  
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3 class="feature-title">HIPAA Compliant</h3>
+      <p class="feature-description">
+        End-to-end encryption, secure fax transmission, and compliant storage. Your medical data is protected at every step.
+      </p>
     </div>
-    <div class="feature">
-      <h4>🔍 Searchable PDFs</h4>
-      <p>All records are OCR'd for easy searching and reference</p>
+    
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3 class="feature-title">Searchable Archives</h3>
+      <p class="feature-description">
+        All records are processed with advanced OCR. Search your entire medical history by date, provider, diagnosis, or any text.
+      </p>
     </div>
-    <div class="feature">
-      <h4>⚡ Fast & Easy</h4>
-      <p>Get all your records in one place in days, not months</p>
+    
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3 class="feature-title">Fast Delivery</h3>
+      <p class="feature-description">
+        Most requests are fulfilled within days, not weeks. Track status in real-time and download records as soon as they arrive.
+      </p>
     </div>
   </div>
 </section>
+
+<section class="trust-section">
+  <div class="trust-content">
+    <h2 class="trust-title">Your medical records belong to you</h2>
+    <p class="trust-description">
+      Under federal law (HIPAA Right of Access), you have the right to obtain your complete medical records. 
+      We make exercising that right simple and automatic.
+    </p>
+    
+    <div class="trust-features">
+      <div class="trust-feature">
+        <div class="trust-feature-title">No Hidden Fees</div>
+        <p class="trust-feature-description">Transparent pricing. Providers may charge reasonable copying fees per HIPAA regulations.</p>
+      </div>
+      
+      <div class="trust-feature">
+        <div class="trust-feature-title">Private Portal</div>
+        <p class="trust-feature-description">Your records are accessible only to you through your secure, encrypted portal.</p>
+      </div>
+      
+      <div class="trust-feature">
+        <div class="trust-feature-title">Expert Support</div>
+        <p class="trust-feature-description">Our team understands healthcare regulations and is here to help if you need assistance.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 {% endblock %}

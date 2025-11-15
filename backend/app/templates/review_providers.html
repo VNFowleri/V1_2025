@@ -1,581 +1,623 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Review Providers - Veritas One</title>
-  <link rel="stylesheet" href="/static/css/styles.css">
-</head>
-<body>
-<section class="container">
-  <h1>Review Selected Providers</h1>
+{% extends "base.html" %}
 
-  <p class="instructions">
-    Review the providers below. You can edit fax numbers or add additional providers manually.
-  </p>
+{% block content %}
+<style>
+  .review-container {
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  
+  .review-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+  }
+  
+  .review-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--terra-600);
+    margin-bottom: 0.75rem;
+  }
+  
+  .review-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 200;
+    color: var(--navy-950);
+    margin-bottom: 0.75rem;
+  }
+  
+  .review-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  
+  .review-card {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.6s var(--ease-smooth);
+    animation-delay: 0.1s;
+    animation-fill-mode: both;
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--slate-200);
+  }
+  
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin: 0;
+  }
+  
+  /* Summary Stats */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .summary-stat {
+    background: var(--slate-50);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  
+  .summary-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    line-height: 1;
+  }
+  
+  .summary-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.5rem;
+  }
+  
+  /* Provider List */
+  .providers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .provider-card {
+    background: var(--slate-50);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  
+  .provider-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(4px);
+  }
+  
+  .provider-checkbox {
+    margin-top: 2px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--navy-900);
+    flex-shrink: 0;
+  }
+  
+  .provider-info {
+    flex: 1;
+  }
+  
+  .provider-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy-950);
+    margin-bottom: 0.5rem;
+  }
+  
+  .provider-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  
+  .provider-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .provider-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  
+  .badge-verified {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  
+  .badge-high {
+    background: var(--info-bg);
+    color: var(--info);
+  }
+  
+  .badge-medium {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  
+  /* Manual Add Section */
+  .manual-add-section {
+    background: var(--terra-100);
+    border: 2px dashed var(--terra-400);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .manual-add-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+  .manual-add-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--terra-600);
+    margin: 0;
+  }
+  
+  .manual-provider-form {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr auto;
+    gap: 0.75rem;
+    align-items: end;
+  }
+  
+  .manual-provider-item {
+    background: white;
+    border: 1px solid var(--terra-400);
+    border-radius: 8px;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 2fr 1.5fr auto;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .btn-remove {
+    padding: 0.5rem;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-smooth);
+  }
+  
+  .btn-remove:hover {
+    background: var(--danger);
+    color: white;
+  }
+  
+  /* Form Actions */
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-light);
+  }
+  
+  /* Loading State */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 22, 40, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .loading-overlay.active {
+    display: flex;
+  }
+  
+  .loading-content {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--shadow-xl);
+  }
+  
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--slate-200);
+    border-top-color: var(--navy-900);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .summary-row {
+      grid-template-columns: 1fr;
+    }
+    
+    .manual-provider-form,
+    .manual-provider-item {
+      grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+      flex-direction: column;
+    }
+  }
+</style>
 
-  <div id="providersContainer">
-    <!-- Providers will be loaded here by JavaScript -->
+<div class="review-container">
+  <!-- Header -->
+  <div class="review-header">
+    <div class="review-eyebrow">Final Step</div>
+    <h1 class="review-title">Review Selected Providers</h1>
+    <p class="review-subtitle">
+      Confirm your provider selections and add any missing facilities
+    </p>
   </div>
-
-  <div class="manual-provider-section">
-    <h3>Add Provider Manually</h3>
-    <div class="manual-form">
-      <div class="form-row">
-        <label class="form-col">
-          Provider Name *
-          <input type="text" id="manualName" placeholder="e.g., Massachusetts General Hospital" required>
-        </label>
-        <label class="form-col">
-          Fax Number *
-          <input type="tel" id="manualFax" placeholder="e.g., +1-555-123-4567" required>
-        </label>
+  
+  <!-- Summary Card -->
+  <div class="review-card">
+    <div class="card-header">
+      <h3 class="card-title">Request Summary</h3>
+      <span class="section-badge badge-info" id="selected-count">0 Selected</span>
+    </div>
+    
+    <div class="summary-row">
+      <div class="summary-stat">
+        <div class="summary-value" id="total-providers">0</div>
+        <div class="summary-label">Total Providers</div>
       </div>
-      <div class="form-row">
-        <label class="form-col">
-          Address (optional)
-          <input type="text" id="manualAddress" placeholder="e.g., 123 Main St, Boston, MA 02115">
-        </label>
-        <label class="form-col">
-          Phone (optional)
-          <input type="tel" id="manualPhone" placeholder="e.g., +1-555-123-4567">
-        </label>
+      
+      <div class="summary-stat">
+        <div class="summary-value" id="verified-count">0</div>
+        <div class="summary-label">Verified Fax</div>
       </div>
-      <button type="button" onclick="addManualProvider()" class="btn btn-secondary">
-        + Add Provider
-      </button>
+      
+      <div class="summary-stat">
+        <div class="summary-value" id="manual-count">0</div>
+        <div class="summary-label">Manual Entries</div>
+      </div>
+    </div>
+    
+    <div class="alert alert-info" style="margin-bottom: 0;">
+      <strong>ℹ️ Next Steps:</strong> We'll send your signed consent form to each selected provider. 
+      Most facilities respond within 7-14 business days.
     </div>
   </div>
-
-  <div class="review-summary" id="summary">
-    <h3>Summary</h3>
-    <p>You will send medical record requests to <strong><span id="providerCount">0</span> provider(s)</strong>.</p>
-    <p class="summary-note">Each provider will receive a fax with your signed HIPAA authorization.</p>
+  
+  <!-- Selected Providers -->
+  <div class="review-card">
+    <div class="card-header">
+      <h3 class="card-title">Selected Providers</h3>
+    </div>
+    
+    <div id="providers-list" class="providers-list">
+      <!-- Providers will be loaded here via JavaScript -->
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h4>No Providers Selected</h4>
+        <p>Go back to the search page to select healthcare providers.</p>
+        <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary" style="margin-top: 1rem;">
+          Back to Search
+        </a>
+      </div>
+    </div>
+    
+    <!-- Manual Add Section -->
+    <div class="manual-add-section">
+      <div class="manual-add-header">
+        <h4 class="manual-add-title">➕ Add Provider Manually</h4>
+      </div>
+      
+      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+        Know a provider that's not in our database? Add them manually with their fax number.
+      </p>
+      
+      <div id="manual-providers-container">
+        <!-- Manual providers will be added here -->
+      </div>
+      
+      <div class="manual-provider-form">
+        <div class="form-group" style="margin: 0;">
+          <label for="manual-name" style="font-size: 0.75rem;">Provider Name</label>
+          <input 
+            type="text" 
+            id="manual-name" 
+            placeholder="e.g., St. Mary's Hospital"
+            style="padding: 0.75rem;"
+          >
+        </div>
+        
+        <div class="form-group" style="margin: 0;">
+          <label for="manual-fax" style="font-size: 0.75rem;">Fax Number</label>
+          <input 
+            type="tel" 
+            id="manual-fax" 
+            placeholder="+1 (555) 123-4567"
+            style="padding: 0.75rem;"
+          >
+        </div>
+        
+        <button type="button" class="btn btn-secondary" onclick="addManualProvider()" style="padding: 0.75rem 1rem;">
+          Add
+        </button>
+      </div>
+    </div>
   </div>
-
-  <form method="post" action="/review-providers/{{ patient.id }}" id="finalForm">
-    <input type="hidden" name="selected_providers" id="selectedProvidersInput">
-
+  
+  <!-- Form -->
+  <form method="post" action="/review-providers/{{ patient.id }}" id="review-form">
+    <input type="hidden" name="selected_providers" id="selected-providers-input">
+    
     <div class="form-actions">
-      <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary">← Back to Search</a>
-      <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
-        Send Requests
+      <a href="/search-providers/{{ patient.id }}" class="btn btn-ghost">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+        </svg>
+        Back to Search
+      </a>
+      
+      <button type="submit" class="btn btn-primary btn-large" id="submit-btn" disabled>
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+        </svg>
+        Send Requests to <span id="submit-count">0</span> Providers
       </button>
     </div>
   </form>
+</div>
 
-  <div class="important-note">
-    <h4>⚠️ Important</h4>
-    <p>By clicking "Send Requests", you authorize us to send fax requests to all selected providers on your behalf using your signed HIPAA authorization.</p>
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <h3 style="color: var(--navy-950); margin-bottom: 0.5rem;">Sending Requests...</h3>
+    <p style="color: var(--text-secondary); margin: 0;">
+      We're preparing and sending faxes to your selected providers
+    </p>
   </div>
-</section>
+</div>
 
 <script>
-let providers = [];
+// State management
+let selectedProviders = [];
+let manualProviders = [];
 
-// Load providers from sessionStorage on page load
-window.addEventListener('DOMContentLoaded', function() {
-  console.log('Review providers page loaded');
-
+// Load selected providers from sessionStorage
+function loadSelectedProviders() {
   const stored = sessionStorage.getItem('selectedProviders');
-  console.log('SessionStorage data:', stored);
-
   if (stored) {
     try {
-      providers = JSON.parse(stored);
-      console.log(`Loaded ${providers.length} providers from sessionStorage`);
+      selectedProviders = JSON.parse(stored);
       renderProviders();
+      updateSummary();
     } catch (e) {
-      console.error('Error parsing stored providers:', e);
-      providers = [];
+      console.error('Error parsing selected providers:', e);
     }
-  } else {
-    console.log('No providers found in sessionStorage');
   }
+}
 
-  updateSummary();
-});
-
-// Render providers in the container
+// Render providers list
 function renderProviders() {
-  const container = document.getElementById('providersContainer');
-
-  if (providers.length === 0) {
-    container.innerHTML = '<div class="no-providers"><p>No providers selected yet. <a href="/search-providers/{{ patient.id }}">Search for providers</a> or add them manually below.</p></div>';
+  const container = document.getElementById('providers-list');
+  
+  if (selectedProviders.length === 0 && manualProviders.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h4>No Providers Selected</h4>
+        <p>Go back to the search page to select healthcare providers.</p>
+        <a href="/search-providers/{{ patient.id }}" class="btn btn-secondary" style="margin-top: 1rem;">
+          Back to Search
+        </a>
+      </div>
+    `;
     return;
   }
-
-  container.innerHTML = '<h3>Selected Providers</h3>';
-
-  providers.forEach((provider, index) => {
+  
+  container.innerHTML = '';
+  
+  // Render selected providers
+  selectedProviders.forEach((provider, index) => {
     const card = document.createElement('div');
     card.className = 'provider-card';
-    card.id = `provider_${index}`;
-
-    const hasFax = provider.fax || provider.medical_records_fax;
-    const faxNumber = provider.medical_records_fax || provider.fax || '';
-
     card.innerHTML = `
+      <input 
+        type="checkbox" 
+        class="provider-checkbox" 
+        checked 
+        onchange="toggleProvider(${index})"
+      >
       <div class="provider-info">
-        <div class="provider-header">
-          <h4>${provider.name}</h4>
-          ${provider.fax_verified ? '<span class="verified-badge">✓ Verified</span>' : ''}
-          ${provider.source ? `<span class="source-badge">${provider.source}</span>` : ''}
-        </div>
-
-        ${provider.address ? `<p><strong>Address:</strong> ${provider.address}</p>` : ''}
-        ${provider.phone ? `<p><strong>Phone:</strong> ${provider.phone}</p>` : ''}
-        ${provider.npi ? `<p class="npi"><strong>NPI:</strong> ${provider.npi}</p>` : ''}
-
-        <div class="fax-input-group ${hasFax ? '' : 'missing'}">
-          <label for="fax_${index}"><strong>Fax Number:</strong></label>
-          <input
-            type="tel"
-            id="fax_${index}"
-            value="${faxNumber}"
-            onchange="updateProviderFax(${index}, this.value)"
-            placeholder="Enter fax number (required)"
-            class="fax-input ${hasFax ? '' : 'required'}"
-            required
-          >
-          ${!hasFax ? '<p class="fax-warning">⚠️ Fax number required</p>' : ''}
+        <div class="provider-name">${provider.name}</div>
+        <div class="provider-details">
+          ${provider.fax ? `
+            <div class="provider-detail">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M3.5 11.5a3 3 0 0 1-3-3v-6a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3z"/>
+              </svg>
+              <strong>Fax:</strong> ${provider.fax}
+              ${provider.fax_verified ? '<span class="provider-badge badge-verified">✓ Verified</span>' : ''}
+            </div>
+          ` : '<div class="provider-detail" style="color: var(--danger);">⚠️ No fax number available</div>'}
+          ${provider.address ? `
+            <div class="provider-detail">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+              </svg>
+              ${provider.address}
+            </div>
+          ` : ''}
+          ${provider.source ? `<span class="provider-badge badge-${provider.confidence >= 80 ? 'high' : 'medium'}">${provider.source}</span>` : ''}
         </div>
       </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  // Render manual providers
+  renderManualProviders();
+}
 
-      <button type="button" onclick="removeProvider(${index})" class="btn-remove" title="Remove provider">
-        ✕
+// Render manual providers
+function renderManualProviders() {
+  const container = document.getElementById('manual-providers-container');
+  container.innerHTML = '';
+  
+  manualProviders.forEach((provider, index) => {
+    const item = document.createElement('div');
+    item.className = 'manual-provider-item';
+    item.innerHTML = `
+      <div>
+        <strong>${provider.name}</strong>
+      </div>
+      <div class="font-mono" style="color: var(--text-secondary);">
+        ${provider.fax}
+      </div>
+      <button type="button" class="btn-remove" onclick="removeManualProvider(${index})" title="Remove">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+          <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+        </svg>
       </button>
     `;
-
-    container.appendChild(card);
+    container.appendChild(item);
   });
 }
 
-// Update provider fax number
-function updateProviderFax(index, newFax) {
-  if (providers[index]) {
-    providers[index].fax = newFax;
-    console.log(`Updated fax for ${providers[index].name}: ${newFax}`);
-    updateSummary();
-  }
-}
-
-// Remove a provider
-function removeProvider(index) {
-  const provider = providers[index];
-  if (confirm(`Remove ${provider.name} from your request?`)) {
-    providers.splice(index, 1);
-    console.log(`Removed provider, ${providers.length} remaining`);
-    renderProviders();
-    updateSummary();
-
-    // Update sessionStorage
-    sessionStorage.setItem('selectedProviders', JSON.stringify(providers));
-  }
+// Toggle provider selection
+function toggleProvider(index) {
+  selectedProviders[index].selected = !selectedProviders[index].selected;
+  updateSummary();
 }
 
 // Add manual provider
 function addManualProvider() {
-  const name = document.getElementById('manualName').value.trim();
-  const fax = document.getElementById('manualFax').value.trim();
-  const address = document.getElementById('manualAddress').value.trim();
-  const phone = document.getElementById('manualPhone').value.trim();
-
+  const name = document.getElementById('manual-name').value.trim();
+  const fax = document.getElementById('manual-fax').value.trim();
+  
   if (!name || !fax) {
-    alert('Provider name and fax number are required');
+    alert('Please enter both provider name and fax number');
     return;
   }
-
-  // Check for duplicates
-  const duplicate = providers.find(p =>
-    p.name.toLowerCase() === name.toLowerCase() &&
-    p.fax === fax
-  );
-
-  if (duplicate) {
-    alert('This provider is already in your list');
-    return;
-  }
-
-  const newProvider = {
-    name: name,
-    fax: fax,
-    address: address || null,
-    phone: phone || null,
-    source: 'manual',
-    fax_verified: false
-  };
-
-  providers.push(newProvider);
-  console.log(`Added manual provider: ${name}`);
-
-  // Clear form
-  document.getElementById('manualName').value = '';
-  document.getElementById('manualFax').value = '';
-  document.getElementById('manualAddress').value = '';
-  document.getElementById('manualPhone').value = '';
-
-  // Update display
-  renderProviders();
+  
+  manualProviders.push({ name, fax, manual: true });
+  document.getElementById('manual-name').value = '';
+  document.getElementById('manual-fax').value = '';
+  
+  renderManualProviders();
   updateSummary();
-
-  // Update sessionStorage
-  sessionStorage.setItem('selectedProviders', JSON.stringify(providers));
 }
 
-// Update summary and enable/disable submit button
+// Remove manual provider
+function removeManualProvider(index) {
+  manualProviders.splice(index, 1);
+  renderManualProviders();
+  updateSummary();
+}
+
+// Update summary stats
 function updateSummary() {
-  const count = providers.length;
-  const countElement = document.getElementById('providerCount');
-  const submitBtn = document.getElementById('submitBtn');
-  const formInput = document.getElementById('selectedProvidersInput');
-
-  if (countElement) {
-    countElement.textContent = count;
-  }
-
-  // Check if all providers have fax numbers
-  const allHaveFax = providers.every(p => p.fax || p.medical_records_fax);
-  const canSubmit = count > 0 && allHaveFax;
-
-  if (submitBtn) {
-    submitBtn.disabled = !canSubmit;
-
-    if (count === 0) {
-      submitBtn.title = 'Add at least one provider';
-    } else if (!allHaveFax) {
-      submitBtn.title = 'All providers must have fax numbers';
-    } else {
-      submitBtn.title = 'Send requests to all providers';
-    }
-  }
-
-  // Update hidden form input
-  if (formInput) {
-    formInput.value = JSON.stringify(providers);
-  }
-
-  console.log(`Summary updated: ${count} providers, can submit: ${canSubmit}`);
-}
-
-// Handle form submission
-document.getElementById('finalForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-
-  if (providers.length === 0) {
-    alert('Please add at least one provider');
-    return;
-  }
-
-  const missingFax = providers.filter(p => !p.fax && !p.medical_records_fax);
-  if (missingFax.length > 0) {
-    alert(`${missingFax.length} provider(s) are missing fax numbers. Please add fax numbers for all providers.`);
-    return;
-  }
-
-  console.log('Submitting form with providers:', providers);
-
+  const activeProviders = selectedProviders.filter((p, i) => {
+    const checkbox = document.querySelectorAll('.provider-checkbox')[i];
+    return checkbox && checkbox.checked;
+  });
+  
+  const totalCount = activeProviders.length + manualProviders.length;
+  const verifiedCount = activeProviders.filter(p => p.fax_verified).length;
+  const manualCount = manualProviders.length;
+  
+  document.getElementById('total-providers').textContent = totalCount;
+  document.getElementById('verified-count').textContent = verifiedCount;
+  document.getElementById('manual-count').textContent = manualCount;
+  document.getElementById('selected-count').textContent = `${totalCount} Selected`;
+  document.getElementById('submit-count').textContent = totalCount;
+  
+  // Enable/disable submit button
+  const submitBtn = document.getElementById('submit-btn');
+  submitBtn.disabled = totalCount === 0;
+  
   // Update hidden input
-  document.getElementById('selectedProvidersInput').value = JSON.stringify(providers);
+  const allProviders = [...activeProviders, ...manualProviders];
+  document.getElementById('selected-providers-input').value = JSON.stringify(allProviders);
+}
 
-  // Submit the form
-  this.submit();
+// Form submission
+document.getElementById('review-form').addEventListener('submit', function(e) {
+  const overlay = document.getElementById('loading-overlay');
+  overlay.classList.add('active');
 });
+
+// Initialize
+loadSelectedProviders();
 </script>
-
-<style>
-.instructions {
-  background: #e7f3ff;
-  border-left: 4px solid #007bff;
-  padding: 1rem;
-  margin: 1rem 0;
-  border-radius: 4px;
-}
-
-.provider-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin: 1rem 0;
-  background: white;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  transition: all 0.2s;
-}
-
-.provider-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.provider-info {
-  flex: 1;
-}
-
-.provider-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.provider-header h4 {
-  margin: 0;
-  font-size: 1.1rem;
-  flex: 1;
-}
-
-.verified-badge {
-  background: #28a745;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.source-badge {
-  background: #6c757d;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.provider-info p {
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
-}
-
-.npi {
-  font-family: monospace;
-  color: #666;
-}
-
-.fax-input-group {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
-}
-
-.fax-input-group.missing {
-  background: #fff3cd;
-  padding: 1rem;
-  border-radius: 4px;
-  border-top: none;
-}
-
-.fax-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  margin-top: 0.25rem;
-}
-
-.fax-input.required {
-  border-color: #ffc107;
-}
-
-.fax-input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
-}
-
-.fax-warning {
-  color: #856404;
-  font-size: 0.85rem;
-  margin: 0.25rem 0 0 0;
-  font-style: italic;
-}
-
-.btn-remove {
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  line-height: 1;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-remove:hover {
-  background: #c82333;
-  transform: scale(1.1);
-}
-
-.manual-provider-section {
-  background: #f8f9fa;
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin: 2rem 0;
-}
-
-.manual-provider-section h3 {
-  margin-top: 0;
-}
-
-.manual-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.form-col {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-col input {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  margin-top: 0.25rem;
-}
-
-.form-col input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
-}
-
-.review-summary {
-  background: #e7f3ff;
-  border-left: 4px solid #007bff;
-  padding: 1.5rem;
-  margin: 2rem 0;
-  border-radius: 4px;
-}
-
-.review-summary h3 {
-  margin-top: 0;
-}
-
-.review-summary p {
-  margin: 0.5rem 0;
-}
-
-.summary-note {
-  font-size: 0.9rem;
-  color: #666;
-  font-style: italic;
-}
-
-#providerCount {
-  color: #007bff;
-  font-size: 1.2rem;
-}
-
-.no-providers {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  margin: 2rem 0;
-}
-
-.important-note {
-  background: #fff3cd;
-  border-left: 4px solid #ffc107;
-  padding: 1rem;
-  margin: 2rem 0;
-  border-radius: 4px;
-}
-
-.important-note h4 {
-  margin-top: 0;
-  color: #856404;
-}
-
-.important-note p {
-  margin: 0.5rem 0 0 0;
-  color: #856404;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin: 2rem 0;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #007bff;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,123,255,0.3);
-}
-
-.btn-primary:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #545b62;
-}
-
-@media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .provider-card {
-    flex-direction: column;
-  }
-
-  .btn-remove {
-    align-self: flex-end;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-  }
-}
-</style>
-</body>
-</html>
+{% endblock %}
